@@ -45,7 +45,7 @@ public class Usuario {
 	}
 
     public void idPertenceAoUsuario(UUID idUsuario) {
-        if (this.idUsuario.equals(idUsuario)) {
+        if (!this.idUsuario.equals(idUsuario)) {
             throw APIException.build(HttpStatus.FORBIDDEN, "O usuário não têm acesso às tarefas.");
         }
     }
