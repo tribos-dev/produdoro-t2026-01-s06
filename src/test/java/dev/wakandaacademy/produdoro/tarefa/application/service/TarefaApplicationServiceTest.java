@@ -44,7 +44,11 @@ class TarefaApplicationServiceTest {
         assertEquals(UUID.class, response.getIdTarefa().getClass());
     }
 
-
+    @Test
+    void deveRetornarListaTarefaCriada() {
+        TarefaRequest request = getTarefaRequest();
+        when(tarefaRepository.salva(any())).thenReturn(new Tarefa(request));
+    }
 
     public TarefaRequest getTarefaRequest() {
         TarefaRequest request = new TarefaRequest("tarefa 1", UUID.randomUUID(), null, null, 0);
