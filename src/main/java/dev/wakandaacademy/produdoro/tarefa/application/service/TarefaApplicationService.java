@@ -44,13 +44,13 @@ public class TarefaApplicationService implements TarefaService {
 
     //TODO passr id do usuário por parâmetro para validar o cenário de usuário não encotrado
     @Override
-    public List<Tarefa> retornaTodasTarefas(String usuario) {
+    public List<Tarefa> retornaTodasTarefas(String usuario, UUID idUsuario) {
         log.info("[inicia] TarefaApplicationService - retornaTodasTarefa");
         Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
+        usuarioPorEmail.idPertenceAoUsuario(idUsuario);
         log.info("[usuarioPorEmail] {}", usuarioPorEmail);
         List<Tarefa> tarefas =
                     tarefaRepository.buscaTarefasPorIdUsuario(usuarioPorEmail.getIdUsuario());
-        tarefas.forEach(tarefa -> tarefa.pertenceAoUsuario(usuarioPorEmail));
         log.info("[finaliza] TarefaApplicationService - retornaTodasTarefa");
         return tarefas;
     }
