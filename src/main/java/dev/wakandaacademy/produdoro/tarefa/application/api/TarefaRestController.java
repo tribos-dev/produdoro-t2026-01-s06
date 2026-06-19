@@ -43,10 +43,7 @@ public class TarefaRestController implements TarefaAPI {
         String usuario = getUsuarioByToken(token);
         var tarefas = tarefaService.retornaTodasTarefas(usuario, idUsuario);
         log.info("[finaliza] TarefaRestController - retornaTodasTarefas");
-        return tarefas
-                .stream()
-                .map(TarefaResumidoResponse::new)
-                .collect(Collectors.toList());
+        return tarefas;
     }
 
     private String getUsuarioByToken(String token) {

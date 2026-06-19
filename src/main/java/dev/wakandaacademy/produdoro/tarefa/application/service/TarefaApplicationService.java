@@ -3,6 +3,7 @@ package dev.wakandaacademy.produdoro.tarefa.application.service;
 import dev.wakandaacademy.produdoro.handler.APIException;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaIdResponse;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaResumidoResponse;
 import dev.wakandaacademy.produdoro.tarefa.application.repository.TarefaRepository;
 import dev.wakandaacademy.produdoro.tarefa.domain.Tarefa;
 import dev.wakandaacademy.produdoro.usuario.application.repository.UsuarioRepository;
@@ -43,7 +44,7 @@ public class TarefaApplicationService implements TarefaService {
     }
 
     @Override
-    public List<Tarefa> retornaTodasTarefas(String usuario, UUID idUsuario) {
+    public List<TarefaResumidoResponse> retornaTodasTarefas(String usuario, UUID idUsuario) {
         log.info("[inicia] TarefaApplicationService - retornaTodasTarefa");
         verificaUsuarioExistente(idUsuario);
         Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
@@ -51,8 +52,9 @@ public class TarefaApplicationService implements TarefaService {
         log.info("[usuarioPorEmail] {}", usuarioPorEmail);
         List<Tarefa> tarefas =
                     tarefaRepository.buscaTarefasPorIdUsuario(usuarioPorEmail.getIdUsuario());
+        List<TarefaResumidoResponse> tarefasResumidos = TarefaResumidoResponse.converte(tarefas);
         log.info("[finaliza] TarefaApplicationService - retornaTodasTarefa");
-        return tarefas;
+        return tarefasResumidos;
     }
 
     private void verificaUsuarioExistente(UUID idUsuario) {
