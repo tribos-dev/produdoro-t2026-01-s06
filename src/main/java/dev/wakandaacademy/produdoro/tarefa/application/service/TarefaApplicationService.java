@@ -42,10 +42,10 @@ public class TarefaApplicationService implements TarefaService {
         return tarefa;
     }
 
-    //TODO passr id do usuário por parâmetro para validar o cenário de usuário não encotrado
     @Override
     public List<Tarefa> retornaTodasTarefas(String usuario, UUID idUsuario) {
         log.info("[inicia] TarefaApplicationService - retornaTodasTarefa");
+        verificaUsuarioExistente(idUsuario);
         Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
         usuarioPorEmail.idPertenceAoUsuario(idUsuario);
         log.info("[usuarioPorEmail] {}", usuarioPorEmail);
@@ -53,5 +53,9 @@ public class TarefaApplicationService implements TarefaService {
                     tarefaRepository.buscaTarefasPorIdUsuario(usuarioPorEmail.getIdUsuario());
         log.info("[finaliza] TarefaApplicationService - retornaTodasTarefa");
         return tarefas;
+    }
+
+    private void verificaUsuarioExistente(UUID idUsuario) {
+        usuarioRepository.buscaUsuarioPorId(idUsuario);
     }
 }
