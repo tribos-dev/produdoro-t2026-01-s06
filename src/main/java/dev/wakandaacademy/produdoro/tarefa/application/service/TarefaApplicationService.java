@@ -42,6 +42,7 @@ public class TarefaApplicationService implements TarefaService {
         return tarefa;
     }
 
+    //TODO passr id do usuário por parâmetro para validar o cenário de usuário não encotrado
     @Override
     public List<Tarefa> retornaTodasTarefas(String usuario) {
         log.info("[inicia] TarefaApplicationService - retornaTodasTarefa");
