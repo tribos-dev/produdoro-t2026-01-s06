@@ -3,12 +3,16 @@ package dev.wakandaacademy.produdoro.usuario.application.service;
 import javax.validation.Valid;
 
 import dev.wakandaacademy.produdoro.usuario.application.repository.UsuarioRepository;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import dev.wakandaacademy.produdoro.credencial.application.service.CredencialService;
+import dev.wakandaacademy.produdoro.handler.APIException;
 import dev.wakandaacademy.produdoro.pomodoro.application.service.PomodoroService;
 import dev.wakandaacademy.produdoro.usuario.application.api.UsuarioCriadoResponse;
 import dev.wakandaacademy.produdoro.usuario.application.api.UsuarioNovoRequest;
+import dev.wakandaacademy.produdoro.usuario.domain.ConfiguracaoUsuario;
 import dev.wakandaacademy.produdoro.usuario.domain.Usuario;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -28,12 +32,11 @@ public class UsuarioApplicationService implements UsuarioService {
 		log.info("[inicia] UsuarioApplicationService - criaNovoUsuario");
 		var configuracaoPadrao = pomodoroService.getConfiguracaoPadrao();
 		credencialService.criaNovaCredencial(usuarioNovo);
-		var usuario = new Usuario(usuarioNovo,configuracaoPadrao);
+		var usuario = new Usuario(usuarioNovo, configuracaoPadrao);
 		usuarioRepository.salva(usuario);
 		log.info("[finaliza] UsuarioApplicationService - criaNovoUsuario");
 		return new UsuarioCriadoResponse(usuario);
 	}
-
 
 	@Override
 	public UsuarioCriadoResponse buscaUsuarioPorId(UUID idUsuario) {
@@ -43,5 +46,15 @@ public class UsuarioApplicationService implements UsuarioService {
 		return new UsuarioCriadoResponse(usuario);
 	}
 
+	@Override
+	public void iniciarPausaLonga(UUID idUsuario, String usuario) {
+		log.info("[inicia] UsuarioApplicationService - iniciarPausaLonga");
+		Usuario usuarioPausa = usuarioRepository.buscaUsuarioPorEmail(usuario);
+		usuarioRepository.buscaUsuarioPorId(idUsuario);
+		usuarioPausa.validaUsuario(idUsuario);
+		usuarioPausa.alterarStatusParaPausaLonga();
+		usuarioRepository.salva(usuarioPausa);
+		log.info("[finaliza] UsuarioApplicationService - iniciarPausaLonga");
+	}
 
 }
