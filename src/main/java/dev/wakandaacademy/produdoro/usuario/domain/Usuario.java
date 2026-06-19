@@ -7,7 +7,9 @@ import javax.validation.constraints.Email;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.http.HttpStatus;
 
+import dev.wakandaacademy.produdoro.handler.APIException;
 import dev.wakandaacademy.produdoro.pomodoro.domain.ConfiguracaoPadrao;
 import dev.wakandaacademy.produdoro.usuario.application.api.UsuarioNovoRequest;
 import lombok.AccessLevel;
@@ -34,11 +36,29 @@ public class Usuario {
 	private StatusUsuario status = StatusUsuario.FOCO;
 	@Builder.Default
 	private Integer quantidadePomodorosPausaCurta = 0;
-	
+
 	public Usuario(UsuarioNovoRequest usuarioNovo, ConfiguracaoPadrao configuracaoPadrao) {
 		this.idUsuario = UUID.randomUUID();
 		this.email = usuarioNovo.getEmail();
 		this.status = StatusUsuario.FOCO;
 		this.configuracao = new ConfiguracaoUsuario(configuracaoPadrao);
 	}
+
+	public void alterarStatusParaPausaLonga() {
+		if (this.status == StatusUsuario.PAUSA_LONGA) {
+			throw APIException.build(
+					HttpStatus.CONFLICT,
+					"Usúario já esta em PAUSA_LONGA! ");
+		}
+		this.status = StatusUsuario.PAUSA_LONGA;
+	}
+
+	public void validaUsuario(UUID idUsuario) {
+		if (!this.idUsuario.equals(idUsuario)) {
+			throw APIException.build(HttpStatus.UNAUTHORIZED, "Credencial de autenticação não é válida");
+
+		}
+
+	}
+
 }
