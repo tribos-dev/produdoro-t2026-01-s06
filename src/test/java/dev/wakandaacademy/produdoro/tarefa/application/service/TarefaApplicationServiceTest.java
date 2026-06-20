@@ -1,30 +1,28 @@
 package dev.wakandaacademy.produdoro.tarefa.application.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
 import dev.wakandaacademy.produdoro.handler.APIException;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaIdResponse;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaResumidoResponse;
+import dev.wakandaacademy.produdoro.tarefa.application.repository.TarefaRepository;
+import dev.wakandaacademy.produdoro.tarefa.domain.Tarefa;
 import dev.wakandaacademy.produdoro.usuario.application.repository.UsuarioRepository;
 import dev.wakandaacademy.produdoro.usuario.domain.Usuario;
-import feign.FeignException;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaIdResponse;
-import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
-import dev.wakandaacademy.produdoro.tarefa.application.repository.TarefaRepository;
-import dev.wakandaacademy.produdoro.tarefa.domain.Tarefa;
 import org.springframework.http.HttpStatus;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TarefaApplicationServiceTest {
@@ -52,6 +50,7 @@ class TarefaApplicationServiceTest {
     }
 
     @Test
+    @DisplayName("Retorna uma lista de tarefas do usuário, código 200")
     void deveRetornarListaTarefasQuandoExecutadoComSucesso() {
         List<Tarefa> tarefaResumidos = List.of(
                 new Tarefa(getTarefaRequest()),
@@ -62,9 +61,9 @@ class TarefaApplicationServiceTest {
         UUID uuid = UUID.randomUUID();
         Usuario usuario = getUsuario(uuid);
 
-        when(tarefaRepository.buscaTarefasPorIdUsuario(any())).thenReturn(tarefaResumidos);
-        when(usuarioRepository.buscaUsuarioPorId(any())).thenReturn(usuario);
-        when(usuarioRepository.buscaUsuarioPorEmail(any())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefasPorIdUsuario(ArgumentMatchers.isA(UUID.class))).thenReturn(tarefaResumidos);
+        when(usuarioRepository.buscaUsuarioPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(usuario);
+        when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class))).thenReturn(usuario);
 
         List<TarefaResumidoResponse> tarefaResumidosResponse = tarefaApplicationService
                 .retornaTodasTarefas(uuid.toString(), uuid);
@@ -75,15 +74,16 @@ class TarefaApplicationServiceTest {
     }
 
     @Test
+    @DisplayName("Retorna lista vazia quando o usuario não possui tarefas, código 200")
     void deveRetornarListaTarefasVaziaQuandoExecutadoComSucesso() {
         List<Tarefa> tarefaResumidos = List.of();
 
         UUID uuid = UUID.randomUUID();
         Usuario usuario = getUsuario(uuid);
 
-        when(tarefaRepository.buscaTarefasPorIdUsuario(any())).thenReturn(tarefaResumidos);
-        when(usuarioRepository.buscaUsuarioPorId(any())).thenReturn(usuario);
-        when(usuarioRepository.buscaUsuarioPorEmail(any())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefasPorIdUsuario(ArgumentMatchers.isA(UUID.class))).thenReturn(tarefaResumidos);
+        when(usuarioRepository.buscaUsuarioPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(usuario);
+        when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class))).thenReturn(usuario);
 
         List<TarefaResumidoResponse> tarefaResumidosResponse = tarefaApplicationService
                 .retornaTodasTarefas(uuid.toString(), uuid);
@@ -93,10 +93,11 @@ class TarefaApplicationServiceTest {
     }
 
     @Test
+    @DisplayName("Retorna 400 quando o id passado por parâmetro não corresponde a nenhum usuário")
     void deveRetornarExececao400BadRequestQuandoUsuarioIdNaoExistente() {
         UUID uuid = UUID.randomUUID();
 
-        when(usuarioRepository.buscaUsuarioPorId(any()))
+        when(usuarioRepository.buscaUsuarioPorId(ArgumentMatchers.isA(UUID.class)))
                 .thenThrow(APIException.build(HttpStatus.BAD_REQUEST, "Usuario não encontrado!"));
 
         Exception exception = assertThrows(APIException.class, () -> tarefaApplicationService
@@ -107,12 +108,13 @@ class TarefaApplicationServiceTest {
     }
 
     @Test
+    @DisplayName("Retorna código 400 quando o email passado não corresponde a nenhum usuário")
     void deveRetornarExececao400BadRequestQuandoUsuarioEmailNaoExistente() {
         UUID uuid = UUID.randomUUID();
         Usuario usuario = getUsuario(uuid);
 
-        when(usuarioRepository.buscaUsuarioPorId(any())).thenReturn(usuario);
-        when(usuarioRepository.buscaUsuarioPorEmail(any()))
+        when(usuarioRepository.buscaUsuarioPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(usuario);
+        when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class)))
                 .thenThrow(APIException.build(HttpStatus.BAD_REQUEST, "Usuario não encontrado!"));
 
         Exception exception = assertThrows(APIException.class, () -> tarefaApplicationService
@@ -123,12 +125,14 @@ class TarefaApplicationServiceTest {
     }
 
     @Test
-    void deveRetornarExececao403ForbiddenQuandoUsuarioEmailNaoExistente() {
+    @DisplayName(
+            "Retorna códido 403 Forbidden quando passado por parâmetro não coincide com o usuário passado por token")
+    void deveRetornarExececao403ForbiddenQuandoUsuarioPassadoPorParametroNaoCoincidirComOToken() {
         UUID uuid = UUID.randomUUID();
         Usuario usuario = getUsuario(uuid);
 
-        when(usuarioRepository.buscaUsuarioPorId(any())).thenReturn(usuario);
-        when(usuarioRepository.buscaUsuarioPorEmail(any())).thenReturn(usuario);
+        when(usuarioRepository.buscaUsuarioPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(usuario);
+        when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class))).thenReturn(usuario);
 
         Exception exception = assertThrows(APIException.class, () -> tarefaApplicationService
                 .retornaTodasTarefas(uuid.toString(), UUID.randomUUID()));
