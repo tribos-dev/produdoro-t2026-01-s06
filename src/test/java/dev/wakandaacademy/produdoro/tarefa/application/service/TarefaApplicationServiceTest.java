@@ -100,11 +100,11 @@ class TarefaApplicationServiceTest {
         when(usuarioRepository.buscaUsuarioPorId(ArgumentMatchers.isA(UUID.class)))
                 .thenThrow(APIException.build(HttpStatus.BAD_REQUEST, "Usuario não encontrado!"));
 
-        Exception exception = assertThrows(APIException.class, () -> tarefaApplicationService
+        APIException exception = assertThrows(APIException.class, () -> tarefaApplicationService
                 .retornaTodasTarefas(uuid.toString(), uuid));
 
         assertEquals("Usuario não encontrado!", exception.getMessage());
-        assertEquals(APIException.class, exception.getClass());
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusException());
     }
 
     @Test
@@ -117,11 +117,11 @@ class TarefaApplicationServiceTest {
         when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class)))
                 .thenThrow(APIException.build(HttpStatus.BAD_REQUEST, "Usuario não encontrado!"));
 
-        Exception exception = assertThrows(APIException.class, () -> tarefaApplicationService
+        APIException exception = assertThrows(APIException.class, () -> tarefaApplicationService
                 .retornaTodasTarefas(uuid.toString(), uuid));
 
         assertEquals("Usuario não encontrado!", exception.getMessage());
-        assertEquals(APIException.class, exception.getClass());
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusException());
     }
 
     @Test
@@ -134,11 +134,11 @@ class TarefaApplicationServiceTest {
         when(usuarioRepository.buscaUsuarioPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(usuario);
         when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class))).thenReturn(usuario);
 
-        Exception exception = assertThrows(APIException.class, () -> tarefaApplicationService
+        APIException exception = assertThrows(APIException.class, () -> tarefaApplicationService
                 .retornaTodasTarefas(uuid.toString(), UUID.randomUUID()));
 
         assertEquals("O usuário não têm acesso às tarefas.", exception.getMessage());
-        assertEquals(APIException.class, exception.getClass());
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusException());
     }
 
     public TarefaRequest getTarefaRequest() {
