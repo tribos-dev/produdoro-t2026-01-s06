@@ -67,4 +67,11 @@ public class Tarefa {
             throw APIException.build(HttpStatus.BAD_REQUEST, "O campo não pode estar vazio");
     }
 
+
+	public void concluir() {
+		if (StatusTarefa.CONCLUIDA.equals(this.status)) {
+			throw APIException.build(HttpStatus.BAD_REQUEST, "Status da  tarefa já é concluido!");
+		}
+		this.status = StatusTarefa.CONCLUIDA;
+	}
 }
