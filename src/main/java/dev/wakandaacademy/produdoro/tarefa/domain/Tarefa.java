@@ -58,9 +58,13 @@ public class Tarefa {
 	}
 
     public void atualizaTarefa(TarefaAtualizarRequest tarefaAtualizarRequest) {
+        validaDescricaoVazia(tarefaAtualizarRequest);
         this.descricao = tarefaAtualizarRequest.getDescricao();
-        this.idArea = tarefaAtualizarRequest.getIdArea();
-        this.idProjeto = tarefaAtualizarRequest.getIdProjeto();
-        this.contagemPomodoro = tarefaAtualizarRequest.getContagemPomodoro();
     }
+
+    private static void validaDescricaoVazia(TarefaAtualizarRequest tarefaAtualizarRequest) {
+        if(tarefaAtualizarRequest.getDescricao().isBlank())
+            throw APIException.build(HttpStatus.BAD_REQUEST, "O campo não pode estar vazio");
+    }
+
 }

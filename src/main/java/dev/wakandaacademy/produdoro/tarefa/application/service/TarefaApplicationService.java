@@ -45,11 +45,7 @@ public class TarefaApplicationService implements TarefaService {
     @Override
     public void atualizaTarefa(String usuario, UUID idTarefa, TarefaAtualizarRequest tarefaAtualizarRequest) {
         log.info("[inicia] TarefaApplicationService - atualizaTarefa");
-        Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
-        log.info("[usuarioPorEmail] {}", usuarioPorEmail);
-        Tarefa tarefa = tarefaRepository.buscaTarefaPorId(idTarefa)
-                .orElseThrow(() -> APIException.build(HttpStatus.NOT_FOUND, "Tarefa não encontrada!"));
-        tarefa.pertenceAoUsuario(usuarioPorEmail);
+        Tarefa tarefa = detalhaTarefa(usuario, idTarefa);
         tarefa.atualizaTarefa(tarefaAtualizarRequest);
         tarefaRepository.salva(tarefa);
         log.debug("[finaliza] TarefaApplicationService - atualizaTarefa");

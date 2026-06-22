@@ -11,7 +11,4 @@ public class TarefaAtualizarRequest {
     @NotBlank
     @Size(message = "Campo descrição tarefa não pode estar vazio", max = 255, min = 3)
     private String descricao;
-    private UUID idArea;
-    private UUID idProjeto;
-    private int contagemPomodoro;
 }
