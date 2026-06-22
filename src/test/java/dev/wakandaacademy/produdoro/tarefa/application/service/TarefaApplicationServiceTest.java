@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -43,6 +45,21 @@ class TarefaApplicationServiceTest {
         assertNotNull(response);
         assertEquals(TarefaIdResponse.class, response.getClass());
         assertEquals(UUID.class, response.getIdTarefa().getClass());
+    }
+
+    @Test
+    void deveCriarTarefaNaUltimaPosicao() {
+        TarefaRequest request = getTarefaRequest();
+        int quantTarefasExistentes = 5;
+
+        when(tarefaRepository.contaTarefasUsuario(request.getIdUsuario())).thenReturn(quantTarefasExistentes);
+        when(tarefaRepository.salva(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        tarefaApplicationService.criaNovaTarefa(request);
+
+        ArgumentCaptor<Tarefa> captor = ArgumentCaptor.forClass(Tarefa.class);
+        verify(tarefaRepository).contaTarefasUsuario(request.getIdUsuario());
+        verify(tarefaRepository).salva(captor.capture());
+        assertEquals(quantTarefasExistentes, captor.getValue().getPosicao());
     }
 
 
