@@ -3,6 +3,7 @@ package dev.wakandaacademy.produdoro.tarefa.domain;
 import java.util.UUID;
 
 import dev.wakandaacademy.produdoro.handler.APIException;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaAtualizarRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
 import dev.wakandaacademy.produdoro.usuario.domain.Usuario;
 
@@ -55,4 +56,11 @@ public class Tarefa {
 			throw APIException.build(HttpStatus.UNAUTHORIZED, "Usuário não é dono da Tarefa solicitada!");
 		}
 	}
+
+    public void atualizaTarefa(TarefaAtualizarRequest tarefaAtualizarRequest) {
+        this.descricao = tarefaAtualizarRequest.getDescricao();
+        this.idArea = tarefaAtualizarRequest.getIdArea();
+        this.idProjeto = tarefaAtualizarRequest.getIdProjeto();
+        this.contagemPomodoro = tarefaAtualizarRequest.getContagemPomodoro();
+    }
 }

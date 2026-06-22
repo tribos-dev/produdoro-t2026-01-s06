@@ -47,8 +47,11 @@ public class TarefaApplicationService implements TarefaService {
         log.info("[inicia] TarefaApplicationService - atualizaTarefa");
         Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
         log.info("[usuarioPorEmail] {}", usuarioPorEmail);
-
-
+        Tarefa tarefa = tarefaRepository.buscaTarefaPorId(idTarefa)
+                .orElseThrow(() -> APIException.build(HttpStatus.NOT_FOUND, "Tarefa não encontrada!"));
+        tarefa.pertenceAoUsuario(usuarioPorEmail);
+        tarefa.atualizaTarefa(tarefaAtualizarRequest);
+        tarefaRepository.salva(tarefa);
         log.debug("[finaliza] TarefaApplicationService - atualizaTarefa");
     }
 }
