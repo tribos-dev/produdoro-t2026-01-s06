@@ -17,10 +17,17 @@ public interface TarefaAPI {
 
     @GetMapping("/{idTarefa}")
     @ResponseStatus(code = HttpStatus.OK)
-    TarefaDetalhadoResponse detalhaTarefa(@RequestHeader(name = "Authorization",required = true) String token, 
-    		@PathVariable UUID idTarefa);
+    TarefaDetalhadoResponse detalhaTarefa(@RequestHeader(name = "Authorization", required = true) String token,
+                                          @PathVariable UUID idTarefa);
 
     @GetMapping("/todas/{idUsuario}")
     @ResponseStatus(code = HttpStatus.OK)
     List<TarefaResumidoResponse> retornaTodasTarefas(@RequestHeader(name = "Authorization", required = true) String token, @PathVariable UUID idUsuario);
+
+    @PatchMapping("/{idTarefa}/concluir")
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    void concluiTarefa(
+            @RequestHeader(name = "Authorization", required = true) String token,
+            @PathVariable UUID idTarefa
+    );
 }
