@@ -1,5 +1,6 @@
 package dev.wakandaacademy.produdoro.tarefa.application.service;
 
+import dev.wakandaacademy.produdoro.DataHelper;
 import dev.wakandaacademy.produdoro.handler.APIException;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaIdResponse;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
@@ -50,23 +51,18 @@ class TarefaApplicationServiceTest {
     }
 
     @Test
-    @DisplayName("Retorna uma lista de tarefas do usuário, código 200")
+    @DisplayName("Retorna uma lista de tarefas do usuário")
     void deveRetornarListaTarefasQuandoExecutadoComSucesso() {
-        List<Tarefa> tarefaResumidos = List.of(
-                new Tarefa(getTarefaRequest()),
-                new Tarefa(getTarefaRequest()),
-                new Tarefa(getTarefaRequest())
-        );
+        List<Tarefa> tarefas = DataHelper.createListTarefa();
 
-        UUID uuid = UUID.randomUUID();
-        Usuario usuario = getUsuario(uuid);
+        Usuario usuario = DataHelper.createUsuario();
 
-        when(tarefaRepository.buscaTarefasPorIdUsuario(ArgumentMatchers.isA(UUID.class))).thenReturn(tarefaResumidos);
+        when(tarefaRepository.buscaTarefasPorIdUsuario(ArgumentMatchers.isA(UUID.class))).thenReturn(tarefas);
         when(usuarioRepository.buscaUsuarioPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(usuario);
         when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class))).thenReturn(usuario);
 
         List<TarefaResumidoResponse> tarefaResumidosResponse = tarefaApplicationService
-                .retornaTodasTarefas(uuid.toString(), uuid);
+                .retornaTodasTarefas(usuario.getIdUsuario().toString(), usuario.getIdUsuario());
 
         assertNotNull(tarefaResumidosResponse);
         assertFalse(tarefaResumidosResponse.isEmpty());
@@ -74,19 +70,18 @@ class TarefaApplicationServiceTest {
     }
 
     @Test
-    @DisplayName("Retorna lista vazia quando o usuario não possui tarefas, código 200")
+    @DisplayName("Retorna lista vazia quando o usuario não possui tarefas")
     void deveRetornarListaTarefasVaziaQuandoExecutadoComSucesso() {
         List<Tarefa> tarefaResumidos = List.of();
 
-        UUID uuid = UUID.randomUUID();
-        Usuario usuario = getUsuario(uuid);
+        Usuario usuario = DataHelper.createUsuario();
 
         when(tarefaRepository.buscaTarefasPorIdUsuario(ArgumentMatchers.isA(UUID.class))).thenReturn(tarefaResumidos);
         when(usuarioRepository.buscaUsuarioPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(usuario);
         when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class))).thenReturn(usuario);
 
         List<TarefaResumidoResponse> tarefaResumidosResponse = tarefaApplicationService
-                .retornaTodasTarefas(uuid.toString(), uuid);
+                .retornaTodasTarefas(usuario.getIdUsuario().toString(), usuario.getIdUsuario());
 
         assertNotNull(tarefaResumidosResponse);
         assertTrue(tarefaResumidosResponse.isEmpty());
@@ -110,15 +105,14 @@ class TarefaApplicationServiceTest {
     @Test
     @DisplayName("Retorna código 400 quando o email passado não corresponde a nenhum usuário")
     void deveRetornarExececao400BadRequestQuandoUsuarioEmailNaoExistente() {
-        UUID uuid = UUID.randomUUID();
-        Usuario usuario = getUsuario(uuid);
+        Usuario usuario = DataHelper.createUsuario();
 
         when(usuarioRepository.buscaUsuarioPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(usuario);
         when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class)))
                 .thenThrow(APIException.build(HttpStatus.BAD_REQUEST, "Usuario não encontrado!"));
 
         APIException exception = assertThrows(APIException.class, () -> tarefaApplicationService
-                .retornaTodasTarefas(uuid.toString(), uuid));
+                .retornaTodasTarefas(usuario.getIdUsuario().toString(), usuario.getIdUsuario()));
 
         assertEquals("Usuario não encontrado!", exception.getMessage());
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusException());
@@ -128,17 +122,16 @@ class TarefaApplicationServiceTest {
     @DisplayName(
             "Retorna códido 403 Forbidden quando passado por parâmetro não coincide com o usuário passado por token")
     void deveRetornarExececao403ForbiddenQuandoUsuarioPassadoPorParametroNaoCoincidirComOToken() {
-        UUID uuid = UUID.randomUUID();
-        Usuario usuario = getUsuario(uuid);
+        Usuario usuario = DataHelper.createUsuario();
 
         when(usuarioRepository.buscaUsuarioPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(usuario);
         when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class))).thenReturn(usuario);
 
         APIException exception = assertThrows(APIException.class, () -> tarefaApplicationService
-                .retornaTodasTarefas(uuid.toString(), UUID.randomUUID()));
+                .retornaTodasTarefas(usuario.getIdUsuario().toString(), UUID.randomUUID()));
 
         assertEquals("O usuário não têm acesso às tarefas.", exception.getMessage());
-        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusException());
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusException());
     }
 
     public TarefaRequest getTarefaRequest() {
@@ -147,7 +140,4 @@ class TarefaApplicationServiceTest {
         return request;
     }
 
-    public Usuario getUsuario(UUID uuid) {
-        return Usuario.builder().idUsuario(uuid).build();
-    }
 }
