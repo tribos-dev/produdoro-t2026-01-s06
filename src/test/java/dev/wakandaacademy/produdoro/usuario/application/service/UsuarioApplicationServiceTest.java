@@ -35,21 +35,24 @@ class UsuarioApplicationServiceTest {
         Usuario usuario = DataHelper.createUsuario();
         UUID idUsuario = usuario.getIdUsuario();
 
-        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail()))
-                .thenReturn(usuario);
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
+        when(usuarioRepository.salva(usuario)).thenReturn(usuario);
 
         usuarioApplicationService.iniciaFoco(usuario.getEmail(), idUsuario);
         assertEquals(StatusUsuario.FOCO, usuario.getStatus());
 
-        verify(usuarioRepository).buscaUsuarioPorEmail(usuario.getEmail());
-        verify(usuarioRepository).salva(usuario);
+        verify(usuarioRepository,times(1)).buscaUsuarioPorEmail(usuario.getEmail());
+        verify(usuarioRepository,times(1)).salva(usuario);
     }
+
     @Test
     void deveRetornarUnauthorizedQuandoTokenNaoPertenceAoUsuario() {
         Usuario usuario = DataHelper.createUsuario();
         Usuario outroUsuario = DataHelper.criaUsuarioSecundario();
 
-        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail()))
+                .thenReturn(usuario);
+
         APIException exception = assertThrows(APIException.class, () ->
                 usuarioApplicationService.iniciaFoco(usuario.getEmail(), outroUsuario.getIdUsuario()));
 
@@ -57,6 +60,7 @@ class UsuarioApplicationServiceTest {
         assertEquals("Credencial de autenticação não é válida!", exception.getMessage());
         verify(usuarioRepository, never()).salva(any());
     }
+
     @Test
     void deveRetornarBadRequestQuandoUsuarioJaEstaEmFoco() {
 
@@ -69,7 +73,7 @@ class UsuarioApplicationServiceTest {
         APIException exception = assertThrows(APIException.class, () ->
                 usuarioApplicationService.iniciaFoco(usuario.getEmail(), idUsuario));
 
-        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusException());
+        assertEquals(HttpStatus.CONFLICT, exception.getStatusException());
         assertEquals("Usuário já está em FOCO!", exception.getMessage());
         verify(usuarioRepository, never()).salva(any());
     }

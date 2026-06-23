@@ -48,8 +48,8 @@ public class UsuarioController implements UsuarioAPI {
 	}
 	private String getUsuarioByToken(String token) {
 		log.debug("[token] {}", token);
-		String usuario = tokenService.getUsuarioByBearerToken(token).
-				orElseThrow(() -> APIException.build(HttpStatus.UNAUTHORIZED, token));
+		String usuario = tokenService.getUsuarioByBearerToken(token)
+				.orElseThrow(() -> APIException.build(HttpStatus.UNAUTHORIZED, token));
 		log.info("[usuario] {}", usuario);
 		return usuario;
 	}
