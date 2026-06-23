@@ -12,11 +12,14 @@ import java.util.UUID;
 
 import dev.wakandaacademy.produdoro.DataHelper;
 import dev.wakandaacademy.produdoro.handler.APIException;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaAtualizarRequest;
 import dev.wakandaacademy.produdoro.tarefa.domain.StatusTarefa;
 import dev.wakandaacademy.produdoro.usuario.application.repository.UsuarioRepository;
 import dev.wakandaacademy.produdoro.usuario.domain.Usuario;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -83,6 +86,70 @@ class TarefaApplicationServiceTest {
         assertEquals("Tarefa não encontrada!", exception.getBodyException().getMessage());
     }
 
+    @Test
+    @DisplayName("Tarefa é editada com sucesso")
+    void deveEditarTarefaComSucesso() {
+        Usuario usuario = DataHelper.createUsuario();
+        Tarefa tarefa = DataHelper.createTarefa();
+        TarefaAtualizarRequest tarefaAtualizarRequest = DataHelper.createAtualizarTarefaRequest();
+
+        when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class))).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefaPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(Optional.of(tarefa));
+        when(tarefaRepository.salva(tarefa)).thenReturn(tarefa);
+
+        Tarefa tarefaAtualizada = tarefaApplicationService.atualizaTarefa(
+                usuario.getIdUsuario().toString(),
+                tarefa.getIdTarefa(),
+                tarefaAtualizarRequest
+        );
+
+        assertNotNull(tarefaAtualizada);
+        assertEquals(tarefaAtualizada.getDescricao(), tarefaAtualizarRequest.getDescricao());
+    }
+
+    @Test
+    @DisplayName("Tarefa não encontrada, código 404")
+    void naoDeveRetornarTarefaNaoEncontrada() {
+        Usuario usuario = DataHelper.createUsuario();
+        Tarefa tarefa = DataHelper.createTarefa();
+        TarefaAtualizarRequest tarefaAtualizarRequest = DataHelper.createAtualizarTarefaRequest();
+
+        when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class))).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefaPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(Optional.empty());
+
+        APIException exception
+                = assertThrows(APIException.class, () -> tarefaApplicationService
+                .atualizaTarefa(
+                    usuario.getIdUsuario().toString(),
+                    tarefa.getIdTarefa(),
+                    tarefaAtualizarRequest
+                ));
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusException());
+        assertEquals("Tarefa não encontrada!",  exception.getBodyException().getMessage());
+    }
+
+    @Test
+    @DisplayName("Tarefa não pertence ao usuário, código 401")
+    void tarefaNaoPertenceAoUsuario() {
+        Usuario usuarioComIdDistinto = Usuario.builder().idUsuario(UUID.randomUUID()).build();
+        Tarefa tarefa = DataHelper.createTarefa();
+        TarefaAtualizarRequest tarefaAtualizarRequest = DataHelper.createAtualizarTarefaRequest();
+
+        when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class))).thenReturn(usuarioComIdDistinto);
+        when(tarefaRepository.buscaTarefaPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(Optional.of(tarefa));
+
+        APIException exception
+                = assertThrows(APIException.class, () -> tarefaApplicationService
+                .atualizaTarefa(
+                    usuarioComIdDistinto.getIdUsuario().toString(),
+                    tarefa.getIdTarefa(),
+                    tarefaAtualizarRequest
+                ));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusException());
+        assertEquals("Usuário não é dono da Tarefa solicitada!",  exception.getBodyException().getMessage());
+    }
 
     public TarefaRequest getTarefaRequest() {
         TarefaRequest request = new TarefaRequest("tarefa 1", UUID.randomUUID(), null, null, 0);
