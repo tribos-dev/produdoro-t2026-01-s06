@@ -48,7 +48,7 @@ public class Usuario {
 		if (this.status == StatusUsuario.PAUSA_LONGA) {
 			throw APIException.build(
 					HttpStatus.CONFLICT,
-					"Usúario já esta em PAUSA_LONGA! ");
+					"Usúario já esta em PAUSA_LONGA!");
 		}
 		this.status = StatusUsuario.PAUSA_LONGA;
 	}
