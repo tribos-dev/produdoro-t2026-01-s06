@@ -43,5 +43,13 @@ public class UsuarioApplicationService implements UsuarioService {
 		return new UsuarioCriadoResponse(usuario);
 	}
 
+	@Override
+	public void iniciaFoco(String usuarioEmail, UUID idUsuario) {
+		log.info("[inicia] UsuarioApplicationService - iniciaFoco");
+		Usuario usuario = usuarioRepository.buscaUsuarioPorEmail(usuarioEmail);
+		usuario.iniciaFoco(idUsuario);
+		usuarioRepository.salva(usuario);
+		log.info("[finaliza] UsuarioApplicationService - iniciaFoco");
+	}
 
 }
