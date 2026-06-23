@@ -53,4 +53,11 @@ public class DataHelper {
 
         );
     }
+    public static Usuario criaUsuarioSecundario() {
+        return Usuario.builder()
+                .idUsuario(UUID.randomUUID())
+                .email("outro@teste.com")
+                .status(StatusUsuario.FOCO)
+                .build();
+    }
 }
