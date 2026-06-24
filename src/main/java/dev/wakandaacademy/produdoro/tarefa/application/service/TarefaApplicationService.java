@@ -2,6 +2,7 @@ package dev.wakandaacademy.produdoro.tarefa.application.service;
 
 import dev.wakandaacademy.produdoro.handler.APIException;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaIdResponse;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaModificaOrdemRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.repository.TarefaRepository;
 import dev.wakandaacademy.produdoro.tarefa.domain.Tarefa;
@@ -35,10 +36,28 @@ public class TarefaApplicationService implements TarefaService {
         log.info("[inicia] TarefaApplicationService - detalhaTarefa");
         Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
         log.info("[usuarioPorEmail] {}", usuarioPorEmail);
-        Tarefa tarefa =
-                tarefaRepository.buscaTarefaPorId(idTarefa).orElseThrow(() -> APIException.build(HttpStatus.NOT_FOUND, "Tarefa não encontrada!"));
+        Tarefa tarefa = buscaTarefaPorId(idTarefa);
         tarefa.pertenceAoUsuario(usuarioPorEmail);
         log.info("[finaliza] TarefaApplicationService - detalhaTarefa");
+        return tarefa;
+    }
+
+    @Override
+    public void modificaOrdemTarefa(UUID idTarefa, String usuario, TarefaModificaOrdemRequest novaPosicao) {
+        log.info("[inicia] TarefaApplicationService - modificaOrdemTarefa");
+        Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
+        log.info("[usuarioPorEmail] {}", usuarioPorEmail);
+        Tarefa tarefa = buscaTarefaPorId(idTarefa);
+        tarefa.pertenceAoUsuario(usuarioPorEmail);
+
+        tarefa.modificaPosicao(novaPosicao.getNovaPosicao());
+        tarefaRepository.salva(tarefa);
+        log.info("[finaliza] TarefaApplicationService - modificaOrdemTarefa");
+    }
+
+    public Tarefa buscaTarefaPorId(UUID idTarefa){
+        Tarefa tarefa = tarefaRepository.buscaTarefaPorId(idTarefa).
+                        orElseThrow(() -> APIException.build(HttpStatus.NOT_FOUND, "Tarefa não encontrada!"));
         return tarefa;
     }
 }
