@@ -18,16 +18,15 @@ public interface TarefaAPI {
     TarefaDetalhadoResponse detalhaTarefa(@RequestHeader(name = "Authorization", required = true) String token,
                                           @PathVariable UUID idTarefa);
 
-    @PatchMapping("/{idTarefa}")
-    @ResponseStatus(code = HttpStatus.NO_CONTENT)
-    void atualizaTarefa(@RequestHeader(name = "Authorization",required = true) String token,
-                        @PathVariable UUID idTarefa,
-                        @RequestBody @Valid TarefaAtualizarRequest tarefaAtualizarRequest);
-
     @PatchMapping("/{idTarefa}/concluir")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     void concluiTarefa(
             @RequestHeader(name = "Authorization", required = true) String token,
             @PathVariable UUID idTarefa
     );
+    @PatchMapping("/{idTarefa}")
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    void atualizaTarefa(@RequestHeader(name = "Authorization",required = true) String token,
+                        @PathVariable UUID idTarefa,
+                        @RequestBody @Valid TarefaAtualizarRequest tarefaAtualizarRequest);
 }

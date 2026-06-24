@@ -43,16 +43,6 @@ public class TarefaApplicationService implements TarefaService {
     }
 
     @Override
-    public Tarefa atualizaTarefa(String usuario, UUID idTarefa, TarefaAtualizarRequest tarefaAtualizarRequest) {
-        log.info("[inicia] TarefaApplicationService - atualizaTarefa");
-        Tarefa tarefa = detalhaTarefa(usuario, idTarefa);
-        tarefa.atualizaTarefa(tarefaAtualizarRequest);
-        Tarefa tarefaAtualizada = tarefaRepository.salva(tarefa);
-        log.debug("[finaliza] TarefaApplicationService - atualizaTarefa");
-        return tarefaAtualizada;
-    }
-
-    @Override
     public void concluiTarefa(String usuario, UUID idTarefa) {
         log.info("[inicia] TarefaApplicationService - concluiTarefa");
         Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
@@ -63,5 +53,15 @@ public class TarefaApplicationService implements TarefaService {
         tarefa.concluir();
         tarefaRepository.salva(tarefa);
         log.info("[finaliza] TarefaApplicationService - concluiTarefa");
+    }
+
+    @Override
+    public Tarefa atualizaTarefa(String usuario, UUID idTarefa, TarefaAtualizarRequest tarefaAtualizarRequest) {
+        log.info("[inicia] TarefaApplicationService - atualizaTarefa");
+        Tarefa tarefa = detalhaTarefa(usuario, idTarefa);
+        tarefa.atualizaTarefa(tarefaAtualizarRequest);
+        Tarefa tarefaAtualizada = tarefaRepository.salva(tarefa);
+        log.debug("[finaliza] TarefaApplicationService - atualizaTarefa");
+        return tarefaAtualizada;
     }
 }

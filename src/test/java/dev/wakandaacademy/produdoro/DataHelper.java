@@ -58,4 +58,12 @@ public class DataHelper {
     public static TarefaAtualizarRequest createAtualizarTarefaRequest() {
         return TarefaAtualizarRequest.builder().descricao("tarefa 1").build();
     }
+
+    public static Usuario criaUsuarioSecundario() {
+        return Usuario.builder()
+                .idUsuario(UUID.randomUUID())
+                .email("outro@teste.com")
+                .status(StatusUsuario.FOCO)
+                .build();
+    }
 }
