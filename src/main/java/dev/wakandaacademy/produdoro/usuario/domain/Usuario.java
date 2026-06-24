@@ -49,4 +49,21 @@ public class Usuario {
             throw APIException.build(HttpStatus.FORBIDDEN, "O usuário não têm acesso às tarefas.");
         }
     }
+
+	public void iniciaFoco() {
+		validaSeEstaEmFoco();
+		this.status = StatusUsuario.FOCO;
+	}
+
+	public void validaIdUsuario(UUID idUsuarioRequest) {
+		if (!this.idUsuario.equals(idUsuarioRequest)) {
+			throw APIException.build(HttpStatus.UNAUTHORIZED,
+					"Credencial de autenticação não é válida!");
+		}
+	}
+
+	public void validaSeEstaEmFoco() {
+		if (this.status == StatusUsuario.FOCO) {
+			throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em FOCO!");}
+	}
 }
