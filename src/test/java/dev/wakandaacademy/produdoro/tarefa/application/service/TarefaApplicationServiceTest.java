@@ -93,8 +93,8 @@ class TarefaApplicationServiceTest {
         Tarefa tarefa = DataHelper.createTarefa();
         TarefaAtualizarRequest tarefaAtualizarRequest = DataHelper.createAtualizarTarefaRequest();
 
-        when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class))).thenReturn(usuario);
-        when(tarefaRepository.buscaTarefaPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(Optional.of(tarefa));
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getIdUsuario().toString())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefaPorId(tarefa.getIdTarefa())).thenReturn(Optional.of(tarefa));
         when(tarefaRepository.salva(tarefa)).thenReturn(tarefa);
 
         Tarefa tarefaAtualizada = tarefaApplicationService.atualizaTarefa(
@@ -114,8 +114,8 @@ class TarefaApplicationServiceTest {
         Tarefa tarefa = DataHelper.createTarefa();
         TarefaAtualizarRequest tarefaAtualizarRequest = DataHelper.createAtualizarTarefaRequest();
 
-        when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class))).thenReturn(usuario);
-        when(tarefaRepository.buscaTarefaPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(Optional.empty());
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getIdUsuario().toString())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefaPorId(tarefa.getIdTarefa())).thenReturn(Optional.empty());
 
         APIException exception
                 = assertThrows(APIException.class, () -> tarefaApplicationService
@@ -136,8 +136,8 @@ class TarefaApplicationServiceTest {
         Tarefa tarefa = DataHelper.createTarefa();
         TarefaAtualizarRequest tarefaAtualizarRequest = DataHelper.createAtualizarTarefaRequest();
 
-        when(usuarioRepository.buscaUsuarioPorEmail(ArgumentMatchers.isA(String.class))).thenReturn(usuarioComIdDistinto);
-        when(tarefaRepository.buscaTarefaPorId(ArgumentMatchers.isA(UUID.class))).thenReturn(Optional.of(tarefa));
+        when(usuarioRepository.buscaUsuarioPorEmail(usuarioComIdDistinto.getIdUsuario().toString())).thenReturn(usuarioComIdDistinto);
+        when(tarefaRepository.buscaTarefaPorId(tarefa.getIdTarefa())).thenReturn(Optional.of(tarefa));
 
         APIException exception
                 = assertThrows(APIException.class, () -> tarefaApplicationService
