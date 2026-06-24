@@ -1,5 +1,6 @@
 package dev.wakandaacademy.produdoro.usuario.domain;
 
+import java.io.ObjectInputFilter.Status;
 import java.util.UUID;
 
 import javax.validation.constraints.Email;
@@ -46,12 +47,14 @@ public class Usuario {
 	}
 
 	public void alterarStatusParaPausaLonga() {
-		if (this.status == StatusUsuario.PAUSA_LONGA) {
-			throw APIException.build(
-					HttpStatus.CONFLICT,
-					"Usúario já esta em PAUSA_LONGA!");
-		}
+		validaStatusUsuario(StatusUsuario.PAUSA_LONGA);
 		this.status = StatusUsuario.PAUSA_LONGA;
+	}
+
+	private void validaStatusUsuario(StatusUsuario status) {
+		if (this.status.equals(status)) {
+			throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em " + status + "!");
+		}
 	}
 
 	public void iniciaFoco() {
