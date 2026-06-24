@@ -43,7 +43,7 @@ public class TarefaInfraRepository implements TarefaRepository {
     public List<Tarefa> buscaTarefasPorIdUsuario(UUID idUsuario) {
         log.info("[inicia] TarefaInfraRepository - buscaTarefasPorIdUsuario");
         List<Tarefa> tarefas = tarefaSpringMongoDBRepository.findByIdUsuario(idUsuario);
-        log.debug("[finaliza] TarefaInfraRepository - buscaTarefasPorIdUsuario");
+        log.info("[finaliza] TarefaInfraRepository - buscaTarefasPorIdUsuario");
         return tarefas;
     }
 }
