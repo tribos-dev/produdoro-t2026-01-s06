@@ -105,8 +105,8 @@ class TarefaApplicationServiceTest {
     }
 
     @Test
-    @DisplayName("Tarefa não encontrada, código 404")
-    void naoDeveRetornarTarefaNaoEncontrada() {
+    @DisplayName("Não edita tarefa não encontrada, código 404")
+    void naoDeveEditarTarefaNaoEncontrada() {
         Usuario usuario = DataHelper.createUsuario();
         Tarefa tarefa = DataHelper.createTarefa();
         TarefaAtualizarRequest tarefaAtualizarRequest = DataHelper.createAtualizarTarefaRequest();
@@ -127,8 +127,8 @@ class TarefaApplicationServiceTest {
     }
 
     @Test
-    @DisplayName("Tarefa não pertence ao usuário, código 401")
-    void tarefaNaoPertenceAoUsuario() {
+    @DisplayName("Não edita tarefa que não pertence ao usuário, código 401")
+    void naoEditarTarefaNaoPertenceAoUsuario() {
         Usuario usuarioComIdDistinto = Usuario.builder().idUsuario(UUID.randomUUID()).build();
         Tarefa tarefa = DataHelper.createTarefa();
         TarefaAtualizarRequest tarefaAtualizarRequest = DataHelper.createAtualizarTarefaRequest();
