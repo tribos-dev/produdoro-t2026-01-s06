@@ -12,4 +12,5 @@ public interface UsuarioService {
 
     void iniciarPausaLonga(UUID idUsuario, String usuario);
 
+    void iniciaFoco(String usuarioEmail, UUID idUsuario);
 }

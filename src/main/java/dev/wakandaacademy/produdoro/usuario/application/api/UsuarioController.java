@@ -46,11 +46,26 @@ public class UsuarioController implements UsuarioAPI {
 	@Override
 	public void iniciarPausaLonga(String token, UUID idUsuario) {
 		log.info("[inicia] UsuarioController - inciarPausaLonga");
-		String usuario = tokenService.getUsuarioByBearerToken(token)
-				.orElseThrow(() -> APIException.build(HttpStatus.FORBIDDEN, "Token inválido."));
+		String usuario = getUsuarioByToken(token);
 		usuarioAppplicationService.iniciarPausaLonga(idUsuario, usuario);
 		log.info("[finaliza] UsuarioController - iniciarPausaLonga");
 
 	}
 
+	@Override
+	public void mudaStatusParaFoco(String token, UUID idUsuario) {
+		log.info("[inicia] UsuarioController - mudaStatusParaFoco");
+		log.info("[idUsuario] {}", idUsuario);
+		String usuarioEmail = getUsuarioByToken(token);
+		usuarioAppplicationService.iniciaFoco(usuarioEmail, idUsuario);
+		log.info("[finaliza] UsuarioController - mudaStatusParaFoco");
+	}
+
+	private String getUsuarioByToken(String token) {
+		log.debug("[token] {}", token);
+		String usuario = tokenService.getUsuarioByBearerToken(token)
+				.orElseThrow(() -> APIException.build(HttpStatus.UNAUTHORIZED, token));
+		log.info("[usuario] {}", usuario);
+		return usuario;
+	}
 }
