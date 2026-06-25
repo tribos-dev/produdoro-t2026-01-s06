@@ -62,4 +62,14 @@ public class Tarefa {
 		}
 		this.status = StatusTarefa.CONCLUIDA;
 	}
+
+	public void incrementaPomodoro() {
+		this.contagemPomodoro++;
+	}
+
+	public void validaSePertenceAoUsuario(Usuario usuario) {
+		if (!this.getIdUsuario().equals(usuario.getIdUsuario())) {
+			throw APIException.build(HttpStatus.UNAUTHORIZED, "Usuário não é dono da tarefa solicitada!");
+		}
+	}
 }

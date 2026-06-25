@@ -36,6 +36,9 @@ public class Usuario {
 	private StatusUsuario status = StatusUsuario.FOCO;
 	@Builder.Default
 	private Integer quantidadePomodorosPausaCurta = 0;
+	@Builder.Default
+	private Integer quantidadePomodorosPausaLonga = 0;
+	private Integer contador;
 	
 	public Usuario(UsuarioNovoRequest usuarioNovo, ConfiguracaoPadrao configuracaoPadrao) {
 		this.idUsuario = UUID.randomUUID();
@@ -45,7 +48,7 @@ public class Usuario {
 	}
 
 	public void iniciaFoco() {
-		validaSeEstaEmFoco();
+		validaSeJaEstaEmFoco();
 		this.status = StatusUsuario.FOCO;
 	}
 
@@ -56,8 +59,42 @@ public class Usuario {
 		}
 	}
 
-	public void validaSeEstaEmFoco() {
-		if (this.status == StatusUsuario.FOCO) {
+	public void validaSeJaEstaEmFoco() {
+		if (isStatusFoco()) {
 			throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em FOCO!");}
 	}
+
+	private boolean isStatusFoco() {
+		return this.status == StatusUsuario.FOCO;
+	}
+
+	public void validaSeEstaStatusFoco() {
+		if (!isStatusFoco())  {
+			throw APIException.build(HttpStatus.CONFLICT, "Usuário não está em FOCO!");}
+	}
+
+	public void iniciaPausaAposPomodoro(int contagemPomodoro) {
+		if (contagemPomodoro % 4 == 0) {
+			iniciaPausaLonga();
+		} else {
+			iniciaPausaCurta();
+		}
+	}
+
+	public void iniciaPausaLonga() {
+		iniciaPausa(StatusUsuario.PAUSA_LONGA, configuracao.getTempoMinutosPausaLonga());
+		this.quantidadePomodorosPausaLonga++;
+	}
+
+	public void iniciaPausaCurta() {
+		iniciaPausa(StatusUsuario.PAUSA_CURTA, configuracao.getTempoMinutosPausaCurta());
+		this.quantidadePomodorosPausaCurta++;
+	}
+
+	private void iniciaPausa(StatusUsuario novoStatus, int tempoPausa) {
+		validaSeEstaStatusFoco();
+		this.status = novoStatus;
+		this.contador = tempoPausa;
+	}
+
 }
