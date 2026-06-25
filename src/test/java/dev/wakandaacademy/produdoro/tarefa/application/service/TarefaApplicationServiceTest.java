@@ -2,8 +2,7 @@ package dev.wakandaacademy.produdoro.tarefa.application.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,4 +87,64 @@ class TarefaApplicationServiceTest {
         TarefaRequest request = new TarefaRequest("tarefa 1", UUID.randomUUID(), null, null, 0);
         return request;
     }
+
+    @Test
+    void deveIncrementarPomodoroComSucesso() {
+        Usuario usuario = DataHelper.createUsuarioComStatusFoco();
+        Tarefa tarefa = DataHelper.createTarefa();
+        UUID idTarefa = tarefa.getIdTarefa();
+
+        when(tarefaRepository.buscaTarefaPorId(idTarefa)).thenReturn(Optional.of(tarefa));
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
+        when(tarefaRepository.salva(tarefa)).thenReturn(tarefa);
+        when(usuarioRepository.salva(usuario)).thenReturn(usuario);
+
+        assertDoesNotThrow(() -> tarefaApplicationService.incrementaPomodoro(usuario.getEmail(), idTarefa));
+
+        verify(tarefaRepository, times(1)).buscaTarefaPorId(idTarefa);
+        verify(usuarioRepository, times(1)).buscaUsuarioPorEmail(usuario.getEmail());
+        verify(tarefaRepository, times(1)).salva(tarefa);
+        verify(usuarioRepository, times(1)).salva(usuario);
+    }
+
+    @Test
+    void deveRetornarNotFoundQuandoTarefaNaoExiste() {
+        Usuario usuario = DataHelper.createUsuario();
+        UUID idTarefa = UUID.randomUUID();
+
+        when(tarefaRepository.buscaTarefaPorId(idTarefa)).thenReturn(Optional.empty());
+
+        APIException exception = assertThrows(APIException.class, () ->
+                tarefaApplicationService.incrementaPomodoro(usuario.getEmail(), idTarefa));
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusException());
+        assertEquals("Tarefa não encontrada!", exception.getMessage());
+
+        verify(tarefaRepository, times(1)).buscaTarefaPorId(idTarefa);
+        verify(usuarioRepository, never()).buscaUsuarioPorEmail(any());
+        verify(tarefaRepository, never()).salva(any());
+        verify(usuarioRepository, never()).salva(any());
+    }
+
+    @Test
+    void deveRetornarUnauthorizedQuandoTarefaNaoPertenceAoUsuario() {
+        Usuario usuario = DataHelper.criaUsuarioSecundario();
+        Tarefa tarefa = DataHelper.createTarefa();
+        UUID idTarefa = tarefa.getIdTarefa();
+
+        when(tarefaRepository.buscaTarefaPorId(idTarefa)).thenReturn(Optional.of(tarefa));
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
+
+        APIException exception = assertThrows(APIException.class, () ->
+                tarefaApplicationService.incrementaPomodoro(usuario.getEmail(), idTarefa));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusException());
+        assertEquals("Usuário não é dono da tarefa solicitada!", exception.getMessage());
+
+        verify(tarefaRepository, times(1)).buscaTarefaPorId(idTarefa);
+        verify(usuarioRepository, times(1)).buscaUsuarioPorEmail(usuario.getEmail());
+        verify(tarefaRepository, never()).salva(any());
+        verify(usuarioRepository, never()).salva(any());
+    }
+
 }
