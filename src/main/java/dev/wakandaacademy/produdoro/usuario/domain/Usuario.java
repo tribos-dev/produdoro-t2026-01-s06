@@ -39,12 +39,23 @@ public class Usuario {
 	@Builder.Default
 	private Integer quantidadePomodorosPausaLonga = 0;
 	private Integer contador;
-	
+
 	public Usuario(UsuarioNovoRequest usuarioNovo, ConfiguracaoPadrao configuracaoPadrao) {
 		this.idUsuario = UUID.randomUUID();
 		this.email = usuarioNovo.getEmail();
 		this.status = StatusUsuario.FOCO;
 		this.configuracao = new ConfiguracaoUsuario(configuracaoPadrao);
+	}
+
+	public void alterarStatusParaPausaLonga() {
+		validaStatusUsuario(StatusUsuario.PAUSA_LONGA);
+		this.status = StatusUsuario.PAUSA_LONGA;
+	}
+
+	private void validaStatusUsuario(StatusUsuario status) {
+		if (this.status.equals(status)) {
+			throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em " + status + "!");
+		}
 	}
 
 	public void iniciaFoco() {

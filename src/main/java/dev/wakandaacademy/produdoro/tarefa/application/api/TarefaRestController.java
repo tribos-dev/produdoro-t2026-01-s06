@@ -44,6 +44,14 @@ public class TarefaRestController implements TarefaAPI {
 	}
 
 	@Override
+	public void ativaTarefa(String token, UUID idTarefa) {
+		log.info("[inicia] TarefaRestController - ativaTarefa");
+		String usuario = getUsuarioByToken(token);
+		tarefaService.ativaTarefa(usuario, idTarefa);
+		log.info("[finaliza] TarefaRestController - ativaTarefa");
+	}
+
+	@Override
 	public void incrementaPomodoro(String token, UUID idTarefa) {
 		log.info("[inicia] TarefaRestController - incrementaPomodoro");
 		String usuario = getUsuarioByToken(token);
