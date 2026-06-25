@@ -1,5 +1,6 @@
 package dev.wakandaacademy.produdoro.usuario.domain;
 
+import java.io.ObjectInputFilter.Status;
 import java.util.UUID;
 
 import javax.validation.constraints.Email;
@@ -9,6 +10,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import dev.wakandaacademy.produdoro.handler.APIException;
 import dev.wakandaacademy.produdoro.pomodoro.domain.ConfiguracaoPadrao;
 import dev.wakandaacademy.produdoro.usuario.application.api.UsuarioNovoRequest;
 import lombok.AccessLevel;
@@ -36,12 +38,23 @@ public class Usuario {
 	private StatusUsuario status = StatusUsuario.FOCO;
 	@Builder.Default
 	private Integer quantidadePomodorosPausaCurta = 0;
-	
+
 	public Usuario(UsuarioNovoRequest usuarioNovo, ConfiguracaoPadrao configuracaoPadrao) {
 		this.idUsuario = UUID.randomUUID();
 		this.email = usuarioNovo.getEmail();
 		this.status = StatusUsuario.FOCO;
 		this.configuracao = new ConfiguracaoUsuario(configuracaoPadrao);
+	}
+
+	public void alterarStatusParaPausaLonga() {
+		validaStatusUsuario(StatusUsuario.PAUSA_LONGA);
+		this.status = StatusUsuario.PAUSA_LONGA;
+	}
+
+	private void validaStatusUsuario(StatusUsuario status) {
+		if (this.status.equals(status)) {
+			throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em " + status + "!");
+		}
 	}
 
 	public void iniciaFoco() {
@@ -58,6 +71,7 @@ public class Usuario {
 
 	public void validaSeEstaEmFoco() {
 		if (this.status == StatusUsuario.FOCO) {
-			throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em FOCO!");}
+			throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em FOCO!");
+		}
 	}
 }
