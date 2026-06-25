@@ -82,6 +82,97 @@ class TarefaApplicationServiceTest {
         assertEquals("Tarefa não encontrada!", exception.getBodyException().getMessage());
     }
 
+
+    @Test
+    void deveAtivarTarefaComSucesso() {
+        Usuario usuario = DataHelper.createUsuario();
+        Tarefa tarefa = DataHelper.createTarefa();
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefaPorId(tarefa.getIdTarefa())).thenReturn(Optional.of(tarefa));
+        when(tarefaRepository.buscaTarefaAtivaPorUsuario(usuario.getIdUsuario())).thenReturn(Optional.empty());
+
+        tarefaApplicationService.ativaTarefa(usuario.getEmail(), tarefa.getIdTarefa());
+
+        assertEquals(StatusAtivacaoTarefa.ATIVA, tarefa.getStatusAtivacao());
+        verify(tarefaRepository).salva(tarefa);
+    }
+
+    @Test
+    void deveLancarExcecao_QuandoIdTarefaInvalido() {
+        Usuario usuario = DataHelper.createUsuario();
+        UUID idTarefa = UUID.randomUUID();
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefaPorId(idTarefa)).thenReturn(Optional.empty());
+
+        APIException exception = assertThrows(APIException.class, () -> {
+            tarefaApplicationService.ativaTarefa(usuario.getEmail(), idTarefa);
+        });
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusException());
+        assertEquals("Tarefa não encontrada!", exception.getBodyException().getMessage());
+    }
+
+    @Test
+    void deveDesativarTarefaAnteriorAposAtivarNova() {
+        Usuario usuario = DataHelper.createUsuario();
+        Tarefa tarefaAntiga = Tarefa.builder()
+                .idTarefa(UUID.randomUUID())
+                .idUsuario(usuario.getIdUsuario())
+                .descricao("tarefa antiga")
+                .statusAtivacao(StatusAtivacaoTarefa.ATIVA)
+                .build();
+        Tarefa tarefaNova = DataHelper.createTarefa();
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefaPorId(tarefaNova.getIdTarefa())).thenReturn(Optional.of(tarefaNova));
+        when(tarefaRepository.buscaTarefaAtivaPorUsuario(usuario.getIdUsuario())).thenReturn(Optional.of(tarefaAntiga));
+
+        tarefaApplicationService.ativaTarefa(usuario.getEmail(), tarefaNova.getIdTarefa());
+
+        assertEquals(StatusAtivacaoTarefa.INATIVA, tarefaAntiga.getStatusAtivacao());
+        assertEquals(StatusAtivacaoTarefa.ATIVA, tarefaNova.getStatusAtivacao());
+        verify(tarefaRepository, times(2)).salva(any());
+    }
+
+    @Test
+    void deveLancarExcecao_QuandoTokenNaoPertenceAoTarefa() {
+        Usuario usuarioLogado = DataHelper.criaUsuarioSecundario();
+        Tarefa tarefa = DataHelper.createTarefa();
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuarioLogado.getEmail())).thenReturn(usuarioLogado);
+        when(tarefaRepository.buscaTarefaPorId(tarefa.getIdTarefa())).thenReturn(Optional.of(tarefa));
+
+        APIException exception = assertThrows(APIException.class, () -> {
+            tarefaApplicationService.ativaTarefa(usuarioLogado.getEmail(), tarefa.getIdTarefa());
+        });
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusException());
+        assertEquals("Usuário não é dono da Tarefa solicitada!", exception.getBodyException().getMessage());
+    }
+
+    @Test
+    void deveLancarExcecao_QuandoTarefaJaEstaAtiva() {
+        Usuario usuario = DataHelper.createUsuario();
+        Tarefa tarefa = Tarefa.builder()
+                .idTarefa(UUID.randomUUID())
+                .idUsuario(usuario.getIdUsuario())
+                .descricao("tarefa ativa")
+                .statusAtivacao(StatusAtivacaoTarefa.ATIVA)
+                .build();
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefaPorId(tarefa.getIdTarefa())).thenReturn(Optional.of(tarefa));
+
+        APIException exception = assertThrows(APIException.class, () -> {
+            tarefaApplicationService.ativaTarefa(usuario.getEmail(), tarefa.getIdTarefa());
+        });
+
+        assertEquals(HttpStatus.CONFLICT, exception.getStatusException());
+        assertEquals("Tarefa já está ativa!", exception.getBodyException().getMessage());
+    }
+
     @Test
     void deveDeletarTarefasConcluidasComSucesso() {
         Usuario usuario = DataHelper.createUsuario();
