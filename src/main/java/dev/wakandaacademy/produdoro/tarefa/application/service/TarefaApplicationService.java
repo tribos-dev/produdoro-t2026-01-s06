@@ -59,7 +59,7 @@ public class TarefaApplicationService implements TarefaService {
     public Tarefa atualizaTarefa(String usuario, UUID idTarefa, TarefaAtualizarRequest tarefaAtualizarRequest) {
         log.info("[inicia] TarefaApplicationService - atualizaTarefa");
         Tarefa tarefa = detalhaTarefa(usuario, idTarefa);
-        tarefa.atualizaTarefa(tarefaAtualizarRequest);
+        tarefa.atualizaTarefa(tarefaAtualizarRequest.getDescricao());
         Tarefa tarefaAtualizada = tarefaRepository.salva(tarefa);
         log.debug("[finaliza] TarefaApplicationService - atualizaTarefa");
         return tarefaAtualizada;

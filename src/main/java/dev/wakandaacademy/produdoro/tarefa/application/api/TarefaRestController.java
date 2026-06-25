@@ -48,7 +48,7 @@ public class TarefaRestController implements TarefaAPI {
         log.info("[inicia] TarefaRestController - atualizaTarefa");
         String usuario = getUsuarioByToken(token);
         tarefaService.atualizaTarefa(usuario, idTarefa, tarefaAtualizarRequest);
-        log.debug("[finaliza] TarefaRestController - atualizaTarefa");
+        log.info("[finaliza] TarefaRestController - atualizaTarefa");
     }
 
 	private String getUsuarioByToken(String token) {
