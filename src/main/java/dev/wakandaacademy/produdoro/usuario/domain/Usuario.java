@@ -38,7 +38,7 @@ public class Usuario {
 	private Integer quantidadePomodorosPausaCurta = 0;
 	@Builder.Default
 	private Integer quantidadePomodorosPausaLonga = 0;
-	private Integer contador;
+	private Integer contador = 0;
 
 	public Usuario(UsuarioNovoRequest usuarioNovo, ConfiguracaoPadrao configuracaoPadrao) {
 		this.idUsuario = UUID.randomUUID();
