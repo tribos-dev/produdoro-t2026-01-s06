@@ -75,8 +75,7 @@ public class Usuario {
 		}
 	}
 
-	public void iniciaPausaCurta(UUID idUsuario) {
-		validaIdUsuario(idUsuario);
+	public void iniciaPausaCurta() {
 		validaSeEstaEmPausaCurta();
 		this.status = StatusUsuario.PAUSA_CURTA;
 		this.quantidadePomodorosPausaCurta++;
