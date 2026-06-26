@@ -13,7 +13,6 @@ public class UsuarioCriadoResponse {
 	private final ConfiguracaoUsuarioResponse configuracao;
 	private final StatusUsuario status;
 	private final Integer quantidadePomodorosPausaCurta;
-	private final Integer contador;
 
 	public UsuarioCriadoResponse(Usuario usuario) {
 		this.idUsuario = usuario.getIdUsuario();
@@ -21,5 +20,5 @@ public class UsuarioCriadoResponse {
 		this.configuracao = new ConfiguracaoUsuarioResponse(usuario.getConfiguracao());
 		this.status = usuario.getStatus();
 		this.quantidadePomodorosPausaCurta = usuario.getQuantidadePomodorosPausaCurta();
-		this.contador = usuario.getContador();	}
+	}
 }

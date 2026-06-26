@@ -26,86 +26,82 @@ import org.springframework.http.HttpStatus;
 @ToString
 @Document(collection = "Usuario")
 public class Usuario {
-	@Id
-	private UUID idUsuario;
-	@Email
-	@Indexed(unique = true)
-	private String email;
-	private ConfiguracaoUsuario configuracao;
-	@Builder.Default
-	private StatusUsuario status = StatusUsuario.FOCO;
-	@Builder.Default
-	private Integer quantidadePomodorosPausaCurta = 0;
-	@Builder.Default
-	private Integer quantidadePomodorosPausaLonga = 0;
-	private Integer contador = 0;
+    @Id
+    private UUID idUsuario;
+    @Email
+    @Indexed(unique = true)
+    private String email;
+    private ConfiguracaoUsuario configuracao;
+    @Builder.Default
+    private StatusUsuario status = StatusUsuario.FOCO;
+    @Builder.Default
+    private Integer quantidadePomodorosPausaCurta = 0;
+    @Builder.Default
+    private Integer quantidadePomodorosPausaLonga = 0;
 
-	public Usuario(UsuarioNovoRequest usuarioNovo, ConfiguracaoPadrao configuracaoPadrao) {
-		this.idUsuario = UUID.randomUUID();
-		this.email = usuarioNovo.getEmail();
-		this.status = StatusUsuario.FOCO;
-		this.configuracao = new ConfiguracaoUsuario(configuracaoPadrao);
-	}
+    public Usuario(UsuarioNovoRequest usuarioNovo, ConfiguracaoPadrao configuracaoPadrao) {
+        this.idUsuario = UUID.randomUUID();
+        this.email = usuarioNovo.getEmail();
+        this.status = StatusUsuario.FOCO;
+        this.configuracao = new ConfiguracaoUsuario(configuracaoPadrao);
+    }
 
-	public void alterarStatusParaPausaLonga() {
-		validaStatusUsuario(StatusUsuario.PAUSA_LONGA);
-		this.status = StatusUsuario.PAUSA_LONGA;
-	}
+    public void alterarStatusParaPausaLonga() {
+        validaStatusUsuario(StatusUsuario.PAUSA_LONGA);
+        this.status = StatusUsuario.PAUSA_LONGA;
+    }
 
-	private void validaStatusUsuario(StatusUsuario status) {
-		if (this.status.equals(status)) {
-			throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em " + status + "!");
-		}
-	}
+    private void validaStatusUsuario(StatusUsuario status) {
+        if (this.status.equals(status)) {
+            throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em " + status + "!");
+        }
+    }
 
-	public void iniciaFoco() {
-		validaSeJaEstaEmFoco();
-		this.status = StatusUsuario.FOCO;
-	}
+    public void iniciaFoco() {
+        validaSeJaEstaEmFoco();
+        this.status = StatusUsuario.FOCO;
+    }
 
-	public void validaIdUsuario(UUID idUsuarioRequest) {
-		if (!this.idUsuario.equals(idUsuarioRequest)) {
-			throw APIException.build(HttpStatus.UNAUTHORIZED,
-					"Credencial de autenticação não é válida!");
-		}
-	}
+    public void validaIdUsuario(UUID idUsuarioRequest) {
+        if (!this.idUsuario.equals(idUsuarioRequest)) {
+            throw APIException.build(HttpStatus.UNAUTHORIZED,
+                    "Credencial de autenticação não é válida!");
+        }
+    }
 
-	public void validaSeJaEstaEmFoco() {
-		if (isStatusFoco()) {
-			throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em FOCO!");}
-	}
+    public void validaSeJaEstaEmFoco() {
+        if (isStatusFoco()) {
+            throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em FOCO!");
+        }
+    }
 
-	private boolean isStatusFoco() {
-		return this.status == StatusUsuario.FOCO;
-	}
+    private boolean isStatusFoco() {
+        return this.status == StatusUsuario.FOCO;
+    }
 
-	public void validaSeEstaStatusFoco() {
-		if (!isStatusFoco())  {
-			throw APIException.build(HttpStatus.CONFLICT, "Usuário não está em FOCO!");}
-	}
+    public void validaSeEstaStatusFoco() {
+        if (!isStatusFoco()) {
+            throw APIException.build(HttpStatus.CONFLICT, "Usuário não está em FOCO!");
+        }
+    }
 
-	public void iniciaPausaAposPomodoro(int contagemPomodoro) {
-		if (contagemPomodoro % 4 == 0) {
-			iniciaPausaLonga();
-		} else {
-			iniciaPausaCurta();
-		}
-	}
+    public void iniciaPausaAposPomodoro(int contagemPomodoro) {
+        if (contagemPomodoro % 4 == 0) {
+            alterarStatusParaPausaLonga();
+        } else {
+            iniciaPausaCurta();
+        }
+    }
 
-	public void iniciaPausaLonga() {
-		iniciaPausa(StatusUsuario.PAUSA_LONGA, configuracao.getTempoMinutosPausaLonga());
-		this.quantidadePomodorosPausaLonga++;
-	}
+    public void iniciaPausaCurta() {
+        validaSeEstaEmPausaCurta();
+        this.status = StatusUsuario.PAUSA_CURTA;
+        this.quantidadePomodorosPausaCurta++;
+    }
 
-	public void iniciaPausaCurta() {
-		iniciaPausa(StatusUsuario.PAUSA_CURTA, configuracao.getTempoMinutosPausaCurta());
-		this.quantidadePomodorosPausaCurta++;
-	}
-
-	private void iniciaPausa(StatusUsuario novoStatus, int tempoPausa) {
-		validaSeEstaStatusFoco();
-		this.status = novoStatus;
-		this.contador = tempoPausa;
-	}
-
+    public void validaSeEstaEmPausaCurta() {
+        if (this.status == StatusUsuario.PAUSA_CURTA) {
+            throw APIException.build(HttpStatus.BAD_REQUEST, "Usuário já esta em PAUSA CURTA!");
+        }
+    }
 }
