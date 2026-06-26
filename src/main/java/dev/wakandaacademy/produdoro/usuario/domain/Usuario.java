@@ -74,4 +74,16 @@ public class Usuario {
 			throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em FOCO!");
 		}
 	}
+
+	public void iniciaPausaCurta() {
+		validaSeEstaEmPausaCurta();
+		this.status = StatusUsuario.PAUSA_CURTA;
+		this.quantidadePomodorosPausaCurta++;
+	}
+
+	public void validaSeEstaEmPausaCurta() {
+		if (this.status == StatusUsuario.PAUSA_CURTA) {
+			throw APIException.build(HttpStatus.BAD_REQUEST, "Usuário já esta em PAUSA CURTA!");
+		}
+	}
 }
