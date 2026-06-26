@@ -38,6 +38,12 @@ public interface TarefaAPI {
             @RequestHeader(name = "Authorization", required = true) String token,
             @PathVariable UUID idTarefa
     );
+    @PatchMapping("/{idTarefa}/incrementa-pomodoro")
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    void incrementaPomodoro(
+            @RequestHeader(name = "Authorization", required = true) String token,
+            @PathVariable UUID idTarefa);
+
 
     @DeleteMapping("/concluidas")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)

@@ -50,12 +50,20 @@ public class TarefaRestController implements TarefaAPI {
         log.info("[finaliza] TarefaRestController - ativaTarefa");
     }
 
-    private String getUsuarioByToken(String token) {
-        log.debug("[token] {}", token);
-        String usuario = tokenService.getUsuarioByBearerToken(token).orElseThrow(() -> APIException.build(HttpStatus.UNAUTHORIZED, token));
-        log.info("[usuario] {}", usuario);
-        return usuario;
-    }
+	@Override
+	public void incrementaPomodoro(String token, UUID idTarefa) {
+		log.info("[inicia] TarefaRestController - incrementaPomodoro");
+		String usuario = getUsuarioByToken(token);
+		tarefaService.incrementaPomodoro(usuario, idTarefa);
+		log.info("[finaliza] TarefaRestController - incrementaPomodoro");
+	}
+
+	private String getUsuarioByToken(String token) {
+		log.debug("[token] {}", token);
+		String usuario = tokenService.getUsuarioByBearerToken(token).orElseThrow(() -> APIException.build(HttpStatus.UNAUTHORIZED, token));
+		log.info("[usuario] {}", usuario);
+		return usuario;
+	}
 
     @Override
     public void deletaTarefasConcluidas(String token) {
@@ -64,12 +72,4 @@ public class TarefaRestController implements TarefaAPI {
         tarefaService.deletaTarefasConcluidas(usuario);
         log.info("[finaliza] TarefaRestController - deletaTarefasConcluidas");
     }
-
-    private String getUsuarioByToken(String token) {
-        log.debug("[token] {}", token);
-        String usuario = tokenService.getUsuarioByBearerToken(token).orElseThrow(() -> APIException.build(HttpStatus.UNAUTHORIZED, token));
-        log.info("[usuario] {}", usuario);
-        return usuario;
-    }
-
 }

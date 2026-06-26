@@ -76,4 +76,8 @@ public class Tarefa {
 	public void desativa() {
 		this.statusAtivacao = StatusAtivacaoTarefa.INATIVA;
 	}
+
+	public void incrementaPomodoro() {
+		this.contagemPomodoro++;
+	}
 }
