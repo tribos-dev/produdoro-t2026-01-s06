@@ -67,12 +67,8 @@ public class Usuario {
         }
     }
 
-    private boolean isStatusFoco() {
-        return this.status == StatusUsuario.FOCO;
-    }
-
     public void validaSeEstaStatusFoco() {
-        if (!isStatusFoco()) {
+        if (this.status != StatusUsuario.FOCO) {
             throw APIException.build(HttpStatus.CONFLICT, "Usuário não está em FOCO!");
         }
     }
@@ -82,7 +78,7 @@ public class Usuario {
             alterarStatusParaPausaLonga();
         } else {
             iniciaPausaCurta();
-        }
+         }
     }
 
     public void iniciaPausaCurta() {
