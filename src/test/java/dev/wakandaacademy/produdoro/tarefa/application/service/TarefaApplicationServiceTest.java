@@ -133,7 +133,7 @@ class TarefaApplicationServiceTest {
                 tarefaApplicationService.incrementaPomodoro(usuario.getEmail(), idTarefa));
 
         assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusException());
-        assertEquals("Usuário não é dono da tarefa solicitada!", exception.getMessage());
+        assertEquals("Usuário não é dono da Tarefa solicitada!", exception.getMessage());
 
         verify(tarefaRepository, times(1)).buscaTarefaPorId(idTarefa);
         verify(usuarioRepository, times(1)).buscaUsuarioPorEmail(usuario.getEmail());

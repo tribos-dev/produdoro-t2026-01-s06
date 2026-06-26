@@ -36,8 +36,6 @@ public class Usuario {
     private StatusUsuario status = StatusUsuario.FOCO;
     @Builder.Default
     private Integer quantidadePomodorosPausaCurta = 0;
-    @Builder.Default
-    private Integer quantidadePomodorosPausaLonga = 0;
 
     public Usuario(UsuarioNovoRequest usuarioNovo, ConfiguracaoPadrao configuracaoPadrao) {
         this.idUsuario = UUID.randomUUID();
@@ -58,7 +56,7 @@ public class Usuario {
     }
 
     public void iniciaFoco() {
-        validaSeJaEstaEmFoco();
+        validaStatusUsuario(StatusUsuario.FOCO);
         this.status = StatusUsuario.FOCO;
     }
 
@@ -66,12 +64,6 @@ public class Usuario {
         if (!this.idUsuario.equals(idUsuarioRequest)) {
             throw APIException.build(HttpStatus.UNAUTHORIZED,
                     "Credencial de autenticação não é válida!");
-        }
-    }
-
-    public void validaSeJaEstaEmFoco() {
-        if (isStatusFoco()) {
-            throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em FOCO!");
         }
     }
 

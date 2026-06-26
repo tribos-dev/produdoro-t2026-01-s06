@@ -76,7 +76,7 @@ public class TarefaApplicationService implements TarefaService {
         log.info("[inicia] TarefaApplicationService - incrementaPomodoro");
         Tarefa tarefa = getTarefa(idTarefa);
         Usuario usuario = usuarioRepository.buscaUsuarioPorEmail(usuarioEmail);
-        tarefa.validaSePertenceAoUsuario(usuario);
+        tarefa.pertenceAoUsuario(usuario);
         usuario.validaSeEstaStatusFoco();
         tarefa.incrementaPomodoro();
         usuario.iniciaPausaAposPomodoro(tarefa.getContagemPomodoro());
