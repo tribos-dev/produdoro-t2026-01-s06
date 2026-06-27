@@ -8,6 +8,7 @@ import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
 import dev.wakandaacademy.produdoro.tarefa.domain.StatusAtivacaoTarefa;
 import dev.wakandaacademy.produdoro.tarefa.domain.Tarefa;
 import dev.wakandaacademy.produdoro.usuario.application.api.UsuarioNovoRequest;
+import dev.wakandaacademy.produdoro.usuario.domain.ConfiguracaoUsuario;
 import dev.wakandaacademy.produdoro.usuario.domain.StatusUsuario;
 import dev.wakandaacademy.produdoro.usuario.domain.Usuario;
 
@@ -58,6 +59,14 @@ public class DataHelper {
                 .idUsuario(UUID.randomUUID())
                 .email("outro@teste.com")
                 .status(StatusUsuario.FOCO)
+                .build();
+    }
+    public static Usuario createUsuarioComStatusFoco() {
+        return Usuario.builder()
+                .email("email@email.com")
+                .status(StatusUsuario.FOCO)
+                .idUsuario(usuario1)
+                .configuracao(new ConfiguracaoUsuario(getConfig()))
                 .build();
     }
 }
