@@ -1,12 +1,9 @@
 package dev.wakandaacademy.produdoro.usuario.application.api;
 
-import javax.validation.Valid;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import dev.wakandaacademy.produdoro.usuario.application.service.UsuarioApplicationService;
-
+import javax.validation.Valid;
 import java.util.UUID;
 
 @RestController
