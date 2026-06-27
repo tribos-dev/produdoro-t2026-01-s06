@@ -13,6 +13,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -30,6 +31,22 @@ public class TarefaApplicationService implements TarefaService {
         log.info("[finaliza] TarefaApplicationService - criaNovaTarefa");
         return TarefaIdResponse.builder().idTarefa(tarefaCriada.getIdTarefa()).build();
     }
+
+    @Override
+    public void ativaTarefa(String usuario, UUID idTarefa) {
+        log.info("[inicia] TarefaApplicationService - ativaTarefa");
+        Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
+        Tarefa tarefa = tarefaRepository.buscaTarefaPorId(idTarefa)
+                .orElseThrow(() -> APIException.build(HttpStatus.NOT_FOUND, "Tarefa não encontrada!"));
+        tarefa.pertenceAoUsuario(usuarioPorEmail);
+        tarefa.validaNaoEstaAtiva();
+        tarefaRepository.buscaTarefaAtivaPorUsuario(usuarioPorEmail.getIdUsuario())
+                .ifPresent(tarefaAtiva -> {tarefaAtiva.desativa();tarefaRepository.salva(tarefaAtiva);});
+        tarefa.ativa();
+        tarefaRepository.salva(tarefa);
+        log.info("[finaliza] TarefaApplicationService - ativaTarefa");
+    }
+
     @Override
     public Tarefa detalhaTarefa(String usuario, UUID idTarefa) {
         log.info("[inicia] TarefaApplicationService - detalhaTarefa");
@@ -63,5 +80,47 @@ public class TarefaApplicationService implements TarefaService {
         Tarefa tarefaAtualizada = tarefaRepository.salva(tarefa);
         log.debug("[finaliza] TarefaApplicationService - atualizaTarefa");
         return tarefaAtualizada;
+    }
+
+    @Override
+    public void incrementaPomodoro(String usuarioEmail, UUID idTarefa) {
+        log.info("[inicia] TarefaApplicationService - incrementaPomodoro");
+        Tarefa tarefa = getTarefa(idTarefa);
+        Usuario usuario = usuarioRepository.buscaUsuarioPorEmail(usuarioEmail);
+        tarefa.pertenceAoUsuario(usuario);
+        usuario.validaSeEstaStatusFoco();
+        tarefa.incrementaPomodoro();
+        usuario.iniciaPausaAposPomodoro(tarefa.getContagemPomodoro());
+        tarefaRepository.salva(tarefa);
+        usuarioRepository.salva(usuario);
+        log.info("[finaliza] TarefaApplicationService - incrementaPomodoro");
+    }
+
+    private Tarefa getTarefa(UUID idTarefa) {
+        Tarefa tarefa = tarefaRepository.buscaTarefaPorId(idTarefa)
+                .orElseThrow(() -> APIException.build(HttpStatus.NOT_FOUND, "Tarefa não encontrada!"));
+        return tarefa;
+    }
+
+    @Override
+    public void deletaTarefasConcluidas(String usuario) {
+        log.info("[inicia] TarefaApplicationService - deletaTarefasConcluidas");
+        Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
+        log.info("[usuarioPorEmail] {}", usuarioPorEmail);
+
+        List<Tarefa> tarefasConcluidas = tarefaRepository.buscaTarefasConcluidasPorUsuario(usuarioPorEmail.getIdUsuario());
+
+        if (tarefasConcluidas.isEmpty()) {
+            throw APIException.build(HttpStatus.NOT_FOUND, "Usuário não possui nenhuma tarefa concluída!");
+        }
+
+        tarefasConcluidas.forEach(tarefa -> {
+            if (!usuarioPorEmail.getIdUsuario().equals(tarefa.getIdUsuario())) {
+                throw APIException.build(HttpStatus.UNAUTHORIZED, "usuário(a) não autorizado(a) para a requisição solicitada!");
+            }
+        });
+
+        tarefaRepository.deletaTodas(tarefasConcluidas);
+        log.info("[finaliza] TarefaApplicationService - deletaTarefasConcluidas");
     }
 }

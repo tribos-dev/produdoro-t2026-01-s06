@@ -26,38 +26,70 @@ import org.springframework.http.HttpStatus;
 @ToString
 @Document(collection = "Usuario")
 public class Usuario {
-	@Id
-	private UUID idUsuario;
-	@Email
-	@Indexed(unique = true)
-	private String email;
-	private ConfiguracaoUsuario configuracao;
-	@Builder.Default
-	private StatusUsuario status = StatusUsuario.FOCO;
-	@Builder.Default
-	private Integer quantidadePomodorosPausaCurta = 0;
-	
-	public Usuario(UsuarioNovoRequest usuarioNovo, ConfiguracaoPadrao configuracaoPadrao) {
-		this.idUsuario = UUID.randomUUID();
-		this.email = usuarioNovo.getEmail();
-		this.status = StatusUsuario.FOCO;
-		this.configuracao = new ConfiguracaoUsuario(configuracaoPadrao);
-	}
+    @Id
+    private UUID idUsuario;
+    @Email
+    @Indexed(unique = true)
+    private String email;
+    private ConfiguracaoUsuario configuracao;
+    @Builder.Default
+    private StatusUsuario status = StatusUsuario.FOCO;
+    @Builder.Default
+    private Integer quantidadePomodorosPausaCurta = 0;
 
-	public void iniciaFoco() {
-		validaSeEstaEmFoco();
-		this.status = StatusUsuario.FOCO;
-	}
+    public Usuario(UsuarioNovoRequest usuarioNovo, ConfiguracaoPadrao configuracaoPadrao) {
+        this.idUsuario = UUID.randomUUID();
+        this.email = usuarioNovo.getEmail();
+        this.status = StatusUsuario.FOCO;
+        this.configuracao = new ConfiguracaoUsuario(configuracaoPadrao);
+    }
 
-	public void validaIdUsuario(UUID idUsuarioRequest) {
-		if (!this.idUsuario.equals(idUsuarioRequest)) {
-			throw APIException.build(HttpStatus.UNAUTHORIZED,
-					"Credencial de autenticação não é válida!");
-		}
-	}
+    public void alterarStatusParaPausaLonga() {
+        validaStatusUsuario(StatusUsuario.PAUSA_LONGA);
+        this.status = StatusUsuario.PAUSA_LONGA;
+    }
 
-	public void validaSeEstaEmFoco() {
-		if (this.status == StatusUsuario.FOCO) {
-			throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em FOCO!");}
-	}
+    private void validaStatusUsuario(StatusUsuario status) {
+        if (this.status.equals(status)) {
+            throw APIException.build(HttpStatus.CONFLICT, "Usuário já está em " + status + "!");
+        }
+    }
+
+    public void iniciaFoco() {
+        validaStatusUsuario(StatusUsuario.FOCO);
+        this.status = StatusUsuario.FOCO;
+    }
+
+    public void validaIdUsuario(UUID idUsuarioRequest) {
+        if (!this.idUsuario.equals(idUsuarioRequest)) {
+            throw APIException.build(HttpStatus.UNAUTHORIZED,
+                    "Credencial de autenticação não é válida!");
+        }
+    }
+
+    public void validaSeEstaStatusFoco() {
+        if (this.status != StatusUsuario.FOCO) {
+            throw APIException.build(HttpStatus.CONFLICT, "Usuário não está em FOCO!");
+        }
+    }
+
+    public void iniciaPausaAposPomodoro(int contagemPomodoro) {
+        if (contagemPomodoro % 4 == 0) {
+            alterarStatusParaPausaLonga();
+        } else {
+            iniciaPausaCurta();
+         }
+    }
+
+    public void iniciaPausaCurta() {
+        validaSeEstaEmPausaCurta();
+        this.status = StatusUsuario.PAUSA_CURTA;
+        this.quantidadePomodorosPausaCurta++;
+    }
+
+    public void validaSeEstaEmPausaCurta() {
+        if (this.status == StatusUsuario.PAUSA_CURTA) {
+            throw APIException.build(HttpStatus.BAD_REQUEST, "Usuário já esta em PAUSA CURTA!");
+        }
+    }
 }
