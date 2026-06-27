@@ -2,6 +2,8 @@ package dev.wakandaacademy.produdoro.tarefa.infra;
 
 import dev.wakandaacademy.produdoro.handler.APIException;
 import dev.wakandaacademy.produdoro.tarefa.application.repository.TarefaRepository;
+import dev.wakandaacademy.produdoro.tarefa.domain.StatusAtivacaoTarefa;
+import dev.wakandaacademy.produdoro.tarefa.domain.StatusTarefa;
 import dev.wakandaacademy.produdoro.tarefa.domain.Tarefa;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -31,6 +33,7 @@ public class TarefaInfraRepository implements TarefaRepository {
         log.info("[finaliza] TarefaInfraRepository - salva");
         return tarefa;
     }
+
     @Override
     public Optional<Tarefa> buscaTarefaPorId(UUID idTarefa) {
         log.info("[inicia] TarefaInfraRepository - buscaTarefaPorId");
@@ -45,5 +48,29 @@ public class TarefaInfraRepository implements TarefaRepository {
         List<Tarefa> tarefas = tarefaSpringMongoDBRepository.findByIdUsuario(idUsuario);
         log.info("[finaliza] TarefaInfraRepository - buscaTarefasPorIdUsuario");
         return tarefas;
+    }
+
+    @Override
+    public Optional<Tarefa> buscaTarefaAtivaPorUsuario(UUID idUsuario) {
+        log.info("[inicia] TarefaInfraRepository - buscaTarefaAtivaPorUsuario");
+        Optional<Tarefa> tarefaAtiva = tarefaSpringMongoDBRepository
+                .findByIdUsuarioAndStatusAtivacao(idUsuario, StatusAtivacaoTarefa.ATIVA);
+        log.info("[finaliza] TarefaInfraRepository - buscaTarefaAtivaPorUsuario");
+        return tarefaAtiva;
+    }
+
+    @Override
+    public List<Tarefa> buscaTarefasConcluidasPorUsuario(UUID idUsuario) {
+        log.info("[inicia] TarefaInfraRepository - buscaTarefasConcluidasPorUsuario");
+        List<Tarefa> tarefasConcluidas = tarefaSpringMongoDBRepository.findAllByIdUsuarioAndStatus(idUsuario, StatusTarefa.CONCLUIDA);
+        log.info("[finaliza] TarefaInfraRepository - buscaTarefasConcluidasPorUsuario");
+        return tarefasConcluidas;
+    }
+
+    @Override
+    public void deletaTodas(List<Tarefa> tarefas) {
+        log.info("[inicia] TarefaInfraRepository - deletaTodas");
+        tarefaSpringMongoDBRepository.deleteAll(tarefas);
+        log.info("[finaliza] TarefaInfraRepository - deletaTodas");
     }
 }

@@ -12,12 +12,13 @@ public class UsuarioCriadoResponse {
 	private final String email;
 	private final ConfiguracaoUsuarioResponse configuracao;
 	private final StatusUsuario status;
-	private final Integer quantidadePomodorosPausaCurta = 0;
+	private final Integer quantidadePomodorosPausaCurta;
 
 	public UsuarioCriadoResponse(Usuario usuario) {
 		this.idUsuario = usuario.getIdUsuario();
 		this.email = usuario.getEmail();
 		this.configuracao = new ConfiguracaoUsuarioResponse(usuario.getConfiguracao());
 		this.status = usuario.getStatus();
+		this.quantidadePomodorosPausaCurta = usuario.getQuantidadePomodorosPausaCurta();
 	}
 }

@@ -3,6 +3,7 @@ package dev.wakandaacademy.produdoro.usuario.application.service;
 import javax.validation.Valid;
 
 import dev.wakandaacademy.produdoro.usuario.application.repository.UsuarioRepository;
+
 import org.springframework.stereotype.Service;
 
 import dev.wakandaacademy.produdoro.credencial.application.service.CredencialService;
@@ -34,13 +35,33 @@ public class UsuarioApplicationService implements UsuarioService {
         return new UsuarioCriadoResponse(usuario);
     }
 
-
     @Override
     public UsuarioCriadoResponse buscaUsuarioPorId(UUID idUsuario) {
         log.info("[inicia] UsuarioApplicationService - buscaUsuarioPorId");
         Usuario usuario = usuarioRepository.buscaUsuarioPorId(idUsuario);
         log.info("[finaliza] UsuarioApplicationService - buscaUsuarioPorId");
         return new UsuarioCriadoResponse(usuario);
+    }
+
+    @Override
+    public void iniciarPausaLonga(UUID idUsuario, String usuario) {
+        log.info("[inicia] UsuarioApplicationService - iniciarPausaLonga");
+        Usuario usuarioPausa = usuarioRepository.buscaUsuarioPorEmail(usuario);
+        usuarioRepository.buscaUsuarioPorId(idUsuario);
+        usuarioPausa.validaIdUsuario(idUsuario);
+        usuarioPausa.alterarStatusParaPausaLonga();
+        usuarioRepository.salva(usuarioPausa);
+        log.info("[finaliza] UsuarioApplicationService - iniciarPausaLonga");
+    }
+
+    @Override
+    public void iniciaPausaCurta(String usuarioEmail, UUID idUsuario) {
+        log.info("[inicia] UsuarioApplicationService - iniciaPausaCurta");
+        Usuario usuario = usuarioRepository.buscaUsuarioPorEmail(usuarioEmail);
+        usuario.validaIdUsuario(idUsuario);
+        usuario.iniciaPausaCurta();
+        usuarioRepository.salva(usuario);
+        log.info("[finaliza] UsuarioApplicationService - iniciaPausaCurta");
     }
 
     @Override
@@ -52,5 +73,4 @@ public class UsuarioApplicationService implements UsuarioService {
         usuarioRepository.salva(usuario);
         log.info("[finaliza] UsuarioApplicationService - iniciaFoco");
     }
-
 }
