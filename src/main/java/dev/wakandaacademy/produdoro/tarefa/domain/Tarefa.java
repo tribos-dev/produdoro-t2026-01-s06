@@ -64,13 +64,13 @@ public class Tarefa {
 		this.status = StatusTarefa.CONCLUIDA;
 	}
 
-    public void atualizaTarefa(String descricao) {
-        validaDescricaoVazia(descricao);
-        this.descricao = descricao;
+    public void atualizaTarefa(String novaDescricao) {
+        validaDescricaoVazia(novaDescricao);
+        this.descricao = novaDescricao;
     }
 
-    private static void validaDescricaoVazia(String descricao) {
-        if(descricao.isBlank())
+    private static void validaDescricaoVazia(String novaDescricao) {
+        if(novaDescricao.isBlank())
             throw APIException.build(HttpStatus.BAD_REQUEST, "O campo não pode estar vazio");
     }
 }
