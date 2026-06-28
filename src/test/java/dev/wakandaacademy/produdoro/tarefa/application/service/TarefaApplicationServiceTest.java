@@ -1,7 +1,7 @@
 package dev.wakandaacademy.produdoro.tarefa.application.service;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Optional;
@@ -24,16 +24,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
 class TarefaApplicationServiceTest {
 
-    //	@Autowired
+    // @Autowired
     @InjectMocks
     TarefaApplicationService tarefaApplicationService;
 
-    //	@MockBean
+    // @MockBean
     @Mock
     TarefaRepository tarefaRepository;
 
@@ -108,8 +110,8 @@ class TarefaApplicationServiceTest {
 
         when(tarefaRepository.buscaTarefaPorId(idTarefa)).thenReturn(Optional.empty());
 
-        APIException exception = assertThrows(APIException.class, () ->
-                tarefaApplicationService.incrementaPomodoro(usuario.getEmail(), idTarefa));
+        APIException exception = assertThrows(APIException.class,
+                () -> tarefaApplicationService.incrementaPomodoro(usuario.getEmail(), idTarefa));
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusException());
         assertEquals("Tarefa não encontrada!", exception.getMessage());
@@ -129,8 +131,8 @@ class TarefaApplicationServiceTest {
         when(tarefaRepository.buscaTarefaPorId(idTarefa)).thenReturn(Optional.of(tarefa));
         when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
 
-        APIException exception = assertThrows(APIException.class, () ->
-                tarefaApplicationService.incrementaPomodoro(usuario.getEmail(), idTarefa));
+        APIException exception = assertThrows(APIException.class,
+                () -> tarefaApplicationService.incrementaPomodoro(usuario.getEmail(), idTarefa));
 
         assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusException());
         assertEquals("Usuário não é dono da Tarefa solicitada!", exception.getMessage());
@@ -163,9 +165,8 @@ class TarefaApplicationServiceTest {
         when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
         when(tarefaRepository.buscaTarefasConcluidasPorUsuario(usuario.getIdUsuario())).thenReturn(List.of());
 
-        APIException exception = assertThrows(APIException.class, () ->
-                tarefaApplicationService.deletaTarefasConcluidas(usuario.getEmail())
-        );
+        APIException exception = assertThrows(APIException.class,
+                () -> tarefaApplicationService.deletaTarefasConcluidas(usuario.getEmail()));
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusException());
         assertEquals("Usuário não possui nenhuma tarefa concluída!", exception.getBodyException().getMessage());
@@ -178,14 +179,15 @@ class TarefaApplicationServiceTest {
         Tarefa tarefaDeOutroUsuario = criaTarefa(UUID.randomUUID(), StatusTarefa.CONCLUIDA);
 
         when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
-        when(tarefaRepository.buscaTarefasConcluidasPorUsuario(usuario.getIdUsuario())).thenReturn(List.of(tarefaDeOutroUsuario));
+        when(tarefaRepository.buscaTarefasConcluidasPorUsuario(usuario.getIdUsuario()))
+                .thenReturn(List.of(tarefaDeOutroUsuario));
 
-        APIException exception = assertThrows(APIException.class, () ->
-                tarefaApplicationService.deletaTarefasConcluidas(usuario.getEmail())
-        );
+        APIException exception = assertThrows(APIException.class,
+                () -> tarefaApplicationService.deletaTarefasConcluidas(usuario.getEmail()));
 
         assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusException());
-        assertEquals("usuário(a) não autorizado(a) para a requisição solicitada!", exception.getBodyException().getMessage());
+        assertEquals("usuário(a) não autorizado(a) para a requisição solicitada!",
+                exception.getBodyException().getMessage());
         verify(tarefaRepository, never()).deletaTodas(anyList());
     }
 
@@ -196,9 +198,8 @@ class TarefaApplicationServiceTest {
         when(usuarioRepository.buscaUsuarioPorEmail(email))
                 .thenThrow(APIException.build(HttpStatus.BAD_REQUEST, "Usuário não encontrado"));
 
-        APIException exception = assertThrows(APIException.class, () ->
-                tarefaApplicationService.deletaTarefasConcluidas(email)
-        );
+        APIException exception = assertThrows(APIException.class,
+                () -> tarefaApplicationService.deletaTarefasConcluidas(email));
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusException());
         assertEquals("Usuário não encontrado", exception.getBodyException().getMessage());
@@ -206,6 +207,76 @@ class TarefaApplicationServiceTest {
         verify(tarefaRepository, never()).deletaTodas(anyList());
     }
 
+    @Test
+    void excluirTodasAsTarefasComSucesso() {
+        Usuario usuario = DataHelper.createUsuario();
+        List<Tarefa> tarefas = DataHelper.createListTarefa();
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
+        when(usuarioRepository.buscaUsuarioPorId(usuario.getIdUsuario())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefasPorUsuario(usuario.getIdUsuario())).thenReturn(tarefas);
+
+        tarefaApplicationService.limparTodasTarefas(usuario.getEmail(), usuario.getIdUsuario());
+
+        verify(usuarioRepository).buscaUsuarioPorEmail(usuario.getEmail());
+        verify(usuarioRepository).buscaUsuarioPorId(usuario.getIdUsuario());
+        verify(tarefaRepository).buscaTarefasPorUsuario(usuario.getIdUsuario());
+        verify(tarefaRepository).removerTodasTarefas(tarefas);
+
+    }
+
+    @Test
+    void naoDeveLimparTarefasQuandoExistirMenosDeDuas() {
+
+        Usuario usuario = DataHelper.createUsuario();
+
+        List<Tarefa> tarefas = List.of(DataHelper.createTarefa());
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
+        when(usuarioRepository.buscaUsuarioPorId(usuario.getIdUsuario())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefasPorUsuario(usuario.getIdUsuario())).thenReturn(tarefas);
+
+        APIException exception = assertThrows(APIException.class,
+                () -> tarefaApplicationService.limparTodasTarefas(usuario.getEmail(), usuario.getIdUsuario()));
+        assertEquals("Deve existir pelo menos duas tarefas cadastradas no registro", exception.getMessage());
+
+        verify(tarefaRepository, never()).removerTodasTarefas(any());
+    }
+
+    @Test
+    void usuarioNaoEncontradoAoTentarLimparTarefas() {
+        Usuario usuario = DataHelper.createUsuario();
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail()))
+                .thenThrow(APIException.build(HttpStatus.BAD_REQUEST, "Usuário não encontrado!"));
+        APIException exception = assertThrows(APIException.class,
+                () -> tarefaApplicationService.limparTodasTarefas(usuario.getEmail(), usuario.getIdUsuario()));
+        assertEquals("Usuário não encontrado!", exception.getMessage());
+
+        verify(usuarioRepository).buscaUsuarioPorEmail(usuario.getEmail());
+        verify(tarefaRepository, never()).buscaTarefasPorUsuario(any());
+        verify(tarefaRepository, never()).removerTodasTarefas(any());
+
+    }
+
+    @Test
+    void usuarioNaoPossuiTarefasAoLimparTodas() {
+        Usuario usuario = DataHelper.createUsuario();
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
+        when(usuarioRepository.buscaUsuarioPorId(usuario.getIdUsuario())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefasPorUsuario(usuario.getIdUsuario())).thenReturn(Collections.emptyList());
+
+        APIException exception = assertThrows(APIException.class,
+                () -> tarefaApplicationService.limparTodasTarefas(usuario.getEmail(), usuario.getIdUsuario()));
+        assertEquals("Usuário não possui tarefa(as) cadastrada(as)", exception.getMessage());
+        assertEquals(HttpStatus.CONFLICT, exception.getStatusException());
+
+        verify(usuarioRepository).buscaUsuarioPorEmail(usuario.getEmail());
+        verify(usuarioRepository).buscaUsuarioPorId(usuario.getIdUsuario());
+        verify(tarefaRepository).buscaTarefasPorUsuario(usuario.getIdUsuario());
+        verify(tarefaRepository, never()).removerTodasTarefas(any());
+    }
 
     public TarefaRequest getTarefaRequest() {
         TarefaRequest request = new TarefaRequest("tarefa 1", UUID.randomUUID(), null, null, 0);
