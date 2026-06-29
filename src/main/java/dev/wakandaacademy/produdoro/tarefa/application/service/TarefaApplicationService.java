@@ -25,7 +25,6 @@ public class TarefaApplicationService implements TarefaService {
     private final TarefaRepository tarefaRepository;
     private final UsuarioRepository usuarioRepository;
 
-
     @Override
     public TarefaIdResponse criaNovaTarefa(TarefaRequest tarefaRequest) {
         log.info("[inicia] TarefaApplicationService - criaNovaTarefa");
@@ -44,7 +43,10 @@ public class TarefaApplicationService implements TarefaService {
         tarefa.pertenceAoUsuario(usuarioPorEmail);
         tarefa.validaNaoEstaAtiva();
         tarefaRepository.buscaTarefaAtivaPorUsuario(usuarioPorEmail.getIdUsuario())
-                .ifPresent(tarefaAtiva -> {tarefaAtiva.desativa();tarefaRepository.salva(tarefaAtiva);});
+                .ifPresent(tarefaAtiva -> {
+                    tarefaAtiva.desativa();
+                    tarefaRepository.salva(tarefaAtiva);
+                });
         tarefa.ativa();
         tarefaRepository.salva(tarefa);
         log.info("[finaliza] TarefaApplicationService - ativaTarefa");
@@ -55,6 +57,8 @@ public class TarefaApplicationService implements TarefaService {
         log.info("[inicia] TarefaApplicationService - detalhaTarefa");
         Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
         log.info("[usuarioPorEmail] {}", usuarioPorEmail);
+        Tarefa tarefa = tarefaRepository.buscaTarefaPorId(idTarefa)
+                .orElseThrow(() -> APIException.build(HttpStatus.NOT_FOUND, "Tarefa não encontrada!"));
         Tarefa tarefa = buscaTarefaPorId(idTarefa);
         tarefa.pertenceAoUsuario(usuarioPorEmail);
         log.info("[finaliza] TarefaApplicationService - detalhaTarefa");
@@ -75,6 +79,29 @@ public class TarefaApplicationService implements TarefaService {
     }
 
     @Override
+
+    public void limparTodasTarefas(String usuario, UUID idUsuario) {
+        log.info("[inicia] TarefaApplicationService - limpaTodasTarefas");
+        Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
+        usuarioRepository.buscaUsuarioPorId(idUsuario);
+        usuarioPorEmail.validaIdUsuario(idUsuario);
+        List<Tarefa> tarefas = tarefaRepository.buscaTarefasPorUsuario(idUsuario);
+        validarTarefas(tarefas);
+        tarefaRepository.removerTodasTarefas(tarefas);
+        log.info("[finaliza] TarefaApplicationService - limpaTodasTarefas");
+
+    }
+
+    private void validarTarefas(List<Tarefa> tarefas) {
+        if (tarefas.isEmpty()) {
+            throw APIException.build(HttpStatus.CONFLICT, "Usuário não possui tarefa(as) cadastrada(as)");
+        }
+        if (tarefas.size() < 2) {
+            throw APIException.build(HttpStatus.BAD_REQUEST,
+                    "Deve existir pelo menos duas tarefas cadastradas no registro");
+        }
+    }
+
     public Tarefa atualizaTarefa(String usuario, UUID idTarefa, TarefaAtualizarRequest tarefaAtualizarRequest) {
         log.info("[inicia] TarefaApplicationService - atualizaTarefa");
         Tarefa tarefa = detalhaTarefa(usuario, idTarefa);
@@ -85,6 +112,7 @@ public class TarefaApplicationService implements TarefaService {
     }
 
     @Override
+
     public void incrementaPomodoro(String usuarioEmail, UUID idTarefa) {
         log.info("[inicia] TarefaApplicationService - incrementaPomodoro");
         Tarefa tarefa = getTarefa(idTarefa);
@@ -104,7 +132,8 @@ public class TarefaApplicationService implements TarefaService {
         Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
         log.info("[usuarioPorEmail] {}", usuarioPorEmail);
 
-        List<Tarefa> tarefasConcluidas = tarefaRepository.buscaTarefasConcluidasPorUsuario(usuarioPorEmail.getIdUsuario());
+        List<Tarefa> tarefasConcluidas = tarefaRepository
+                .buscaTarefasConcluidasPorUsuario(usuarioPorEmail.getIdUsuario());
 
         if (tarefasConcluidas.isEmpty()) {
             throw APIException.build(HttpStatus.NOT_FOUND, "Usuário não possui nenhuma tarefa concluída!");
@@ -112,7 +141,8 @@ public class TarefaApplicationService implements TarefaService {
 
         tarefasConcluidas.forEach(tarefa -> {
             if (!usuarioPorEmail.getIdUsuario().equals(tarefa.getIdUsuario())) {
-                throw APIException.build(HttpStatus.UNAUTHORIZED, "usuário(a) não autorizado(a) para a requisição solicitada!");
+                throw APIException.build(HttpStatus.UNAUTHORIZED,
+                        "usuário(a) não autorizado(a) para a requisição solicitada!");
             }
         });
 
@@ -127,8 +157,7 @@ public class TarefaApplicationService implements TarefaService {
         Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
         usuarioPorEmail.idPertenceAoUsuario(idUsuario);
         log.info("[usuarioPorEmail] {}", usuarioPorEmail);
-        List<Tarefa> tarefas =
-                    tarefaRepository.buscaTarefasPorIdUsuario(usuarioPorEmail.getIdUsuario());
+        List<Tarefa> tarefas = tarefaRepository.buscaTarefasPorIdUsuario(usuarioPorEmail.getIdUsuario());
         List<TarefaResumidoResponse> tarefasResumidos = TarefaResumidoResponse.converte(tarefas);
         log.info("[finaliza] TarefaApplicationService - retornaTodasTarefa");
         return tarefasResumidos;
