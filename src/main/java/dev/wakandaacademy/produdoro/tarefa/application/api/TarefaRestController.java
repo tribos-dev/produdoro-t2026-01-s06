@@ -42,6 +42,7 @@ public class TarefaRestController implements TarefaAPI {
         tarefaService.concluiTarefa(usuario, idTarefa);
         log.info("[finaliza] TarefaRestController - concluiTarefa");
     }
+
     @Override
     public List<TarefaResumidoResponse> retornaTodasTarefas(String token, UUID idUsuario) {
         log.info("[inicia] TarefaRestController - retornaTodasTarefas");
@@ -59,13 +60,22 @@ public class TarefaRestController implements TarefaAPI {
         log.info("[finaliza] TarefaRestController - ativaTarefa");
     }
 
-	@Override
-	public void incrementaPomodoro(String token, UUID idTarefa) {
-		log.info("[inicia] TarefaRestController - incrementaPomodoro");
-		String usuario = getUsuarioByToken(token);
-		tarefaService.incrementaPomodoro(usuario, idTarefa);
-		log.info("[finaliza] TarefaRestController - incrementaPomodoro");
-	}
+    @Override
+    public void incrementaPomodoro(String token, UUID idTarefa) {
+        log.info("[inicia] TarefaRestController - incrementaPomodoro");
+        String usuario = getUsuarioByToken(token);
+        tarefaService.incrementaPomodoro(usuario, idTarefa);
+        log.info("[finaliza] TarefaRestController - incrementaPomodoro");
+    }
+
+    @Override
+    public void limparTodasTarefas(String token, UUID idUsuario) {
+        log.info("[inicia] TarefaRestController - limparTodasTarefas");
+        String usuario = getUsuarioByToken(token);
+        tarefaService.limparTodasTarefas(usuario, idUsuario);
+        log.info("[finaliza] TarefaRestController - limparTodasTarefas");
+
+    }
 
     @Override
     public void atualizaTarefa(String token, UUID idTarefa, TarefaAtualizarRequest tarefaAtualizarRequest) {
@@ -75,12 +85,13 @@ public class TarefaRestController implements TarefaAPI {
         log.info("[finaliza] TarefaRestController - atualizaTarefa");
     }
 
-	private String getUsuarioByToken(String token) {
-		log.debug("[token] {}", token);
-		String usuario = tokenService.getUsuarioByBearerToken(token).orElseThrow(() -> APIException.build(HttpStatus.UNAUTHORIZED, token));
-		log.info("[usuario] {}", usuario);
-		return usuario;
-	}
+    private String getUsuarioByToken(String token) {
+        log.debug("[token] {}", token);
+        String usuario = tokenService.getUsuarioByBearerToken(token)
+                .orElseThrow(() -> APIException.build(HttpStatus.UNAUTHORIZED, token));
+        log.info("[usuario] {}", usuario);
+        return usuario;
+    }
 
     @Override
     public void deletaTarefasConcluidas(String token) {
