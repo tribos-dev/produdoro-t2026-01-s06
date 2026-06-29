@@ -135,16 +135,55 @@ public class TarefaApplicationService implements TarefaService {
     }
 
     @Override
-    public void modificaOrdemTarefa(UUID idTarefa, String usuario, TarefaModificaOrdemRequest novaPosicao) {
+    public void modificaOrdemTarefa(UUID idTarefa, String usuario, TarefaModificaOrdemRequest tarefaModificaOrdemRequest) {
         log.info("[inicia] TarefaApplicationService - modificaOrdemTarefa");
         Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
         log.info("[usuarioPorEmail] {}", usuarioPorEmail);
         Tarefa tarefa = buscaTarefaPorId(idTarefa);
         tarefa.pertenceAoUsuario(usuarioPorEmail);
-
-        tarefa.modificaPosicao(novaPosicao.getNovaPosicao());
+        int novaPosicao = tarefaModificaOrdemRequest.getNovaPosicao();
+        modificaOrdemOutrasTarefas(usuarioPorEmail.getIdUsuario(), tarefa, novaPosicao);
+        tarefa.modificaPosicao(novaPosicao);
         tarefaRepository.salva(tarefa);
         log.info("[finaliza] TarefaApplicationService - modificaOrdemTarefa");
+    }
+
+    private void modificaOrdemOutrasTarefas(UUID idUsuario, Tarefa tarefaMovida, int novaPosicao) {
+        log.info("[inicia] TarefaApplicationService - modificaOrdemOutrasTarefas");
+        int posicaoAntiga = tarefaMovida.getPosicao();
+        List<Tarefa> tarefasDoUsuario = tarefaRepository.buscaTarefasPorIdUsuario(idUsuario);
+        validaNovaPosicao(novaPosicao, tarefasDoUsuario.size());
+        tarefasDoUsuario.stream()
+                .filter(outraTarefa -> !outraTarefa.getIdTarefa().equals(tarefaMovida.getIdTarefa()))
+                .forEach(outraTarefa -> {
+                    if (reposicionaOutraTarefa(outraTarefa, posicaoAntiga, novaPosicao)) {
+                        tarefaRepository.salva(outraTarefa);
+                    }
+                });
+        log.info("[finaliza] TarefaApplicationService - modificaOrdemOutrasTarefas");
+    }
+
+    private boolean reposicionaOutraTarefa(Tarefa outraTarefa, int posicaoAntiga, int novaPosicao) {
+        int posicaoAtual = outraTarefa.getPosicao();
+        if (novaPosicao > posicaoAntiga) {
+            if (posicaoAtual > posicaoAntiga && posicaoAtual <= novaPosicao) {
+                outraTarefa.modificaPosicao(posicaoAtual - 1);
+                return true;
+            }
+        } else if (novaPosicao < posicaoAntiga) {
+            if (posicaoAtual >= novaPosicao && posicaoAtual < posicaoAntiga) {
+                outraTarefa.modificaPosicao(posicaoAtual + 1);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void validaNovaPosicao(int novaPosicao, int totalTarefas) {
+        if (novaPosicao >= totalTarefas) {
+            throw APIException.build(HttpStatus.BAD_REQUEST,
+                    "Nova posição inválida! A posição deve estar entre 0 e " + (totalTarefas - 1) + ".");
+        }
     }
 
     private void verificaUsuarioExistente(UUID idUsuario) {
