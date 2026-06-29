@@ -1,12 +1,13 @@
 package dev.wakandaacademy.produdoro.tarefa.application.api;
 
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class TarefaAtualizarRequest {
     @NotBlank

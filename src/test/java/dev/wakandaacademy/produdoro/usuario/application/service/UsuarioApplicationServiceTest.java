@@ -87,7 +87,7 @@ class UsuarioApplicationServiceTest {
                                                 usuario.getEmail()));
 
                 assertEquals(HttpStatus.CONFLICT, exception.getStatusException());
-                assertEquals("Usúario já esta em PAUSA_LONGA!", exception.getMessage());
+                assertEquals("Usuário já está em PAUSA_LONGA!", exception.getMessage());
 
         }
 
