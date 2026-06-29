@@ -59,6 +59,11 @@ public class Usuario {
         validaStatusUsuario(StatusUsuario.FOCO);
         this.status = StatusUsuario.FOCO;
     }
+    public void idPertenceAoUsuario(UUID idUsuario) {
+        if (!this.idUsuario.equals(idUsuario)) {
+            throw APIException.build(HttpStatus.FORBIDDEN, "O usuário não têm acesso às tarefas.");
+        }
+    }
 
     public void validaIdUsuario(UUID idUsuarioRequest) {
         if (!this.idUsuario.equals(idUsuarioRequest)) {

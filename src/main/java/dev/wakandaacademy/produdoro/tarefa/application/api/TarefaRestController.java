@@ -9,6 +9,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -40,6 +41,14 @@ public class TarefaRestController implements TarefaAPI {
         String usuario = getUsuarioByToken(token);
         tarefaService.concluiTarefa(usuario, idTarefa);
         log.info("[finaliza] TarefaRestController - concluiTarefa");
+    }
+    @Override
+    public List<TarefaResumidoResponse> retornaTodasTarefas(String token, UUID idUsuario) {
+        log.info("[inicia] TarefaRestController - retornaTodasTarefas");
+        String usuario = getUsuarioByToken(token);
+        var tarefas = tarefaService.retornaTodasTarefas(usuario, idUsuario);
+        log.info("[finaliza] TarefaRestController - retornaTodasTarefas");
+        return tarefas;
     }
 
     @Override
