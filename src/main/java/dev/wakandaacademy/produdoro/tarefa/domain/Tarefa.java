@@ -1,23 +1,16 @@
 package dev.wakandaacademy.produdoro.tarefa.domain;
 
-import java.util.UUID;
-
 import dev.wakandaacademy.produdoro.handler.APIException;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
 import dev.wakandaacademy.produdoro.usuario.domain.Usuario;
-
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.http.HttpStatus;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import javax.validation.constraints.NotBlank;
+import java.util.UUID;
 
 @Builder
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -64,6 +57,34 @@ public class Tarefa {
 		}
 		this.status = StatusTarefa.CONCLUIDA;
 	}
+
+	public void validaNaoEstaAtiva() {
+		if (this.statusAtivacao == StatusAtivacaoTarefa.ATIVA) {
+			throw APIException.build(HttpStatus.CONFLICT, "Tarefa já está ativa!");
+		}
+	}
+
+	public void ativa() {
+		this.statusAtivacao = StatusAtivacaoTarefa.ATIVA;
+	}
+
+	public void desativa() {
+		this.statusAtivacao = StatusAtivacaoTarefa.INATIVA;
+	}
+
+	public void incrementaPomodoro() {
+		this.contagemPomodoro++;
+	}
+
+    public void atualizaTarefa(String novaDescricao) {
+        validaDescricaoVazia(novaDescricao);
+        this.descricao = novaDescricao;
+    }
+
+    private static void validaDescricaoVazia(String novaDescricao) {
+        if(novaDescricao.isBlank())
+            throw APIException.build(HttpStatus.BAD_REQUEST, "O campo não pode estar vazio");
+    }
 
 	public void modificaPosicao(int novaPosicao){
 		this.posicao = novaPosicao;

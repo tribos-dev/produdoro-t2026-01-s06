@@ -1,9 +1,11 @@
 package dev.wakandaacademy.produdoro.tarefa.application.service;
 
 import dev.wakandaacademy.produdoro.handler.APIException;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaAtualizarRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaIdResponse;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaModificaOrdemRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaResumidoResponse;
 import dev.wakandaacademy.produdoro.tarefa.application.repository.TarefaRepository;
 import dev.wakandaacademy.produdoro.tarefa.domain.Tarefa;
 import dev.wakandaacademy.produdoro.usuario.application.repository.UsuarioRepository;
@@ -13,6 +15,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -31,6 +34,22 @@ public class TarefaApplicationService implements TarefaService {
         log.info("[finaliza] TarefaApplicationService - criaNovaTarefa");
         return TarefaIdResponse.builder().idTarefa(tarefaCriada.getIdTarefa()).build();
     }
+
+    @Override
+    public void ativaTarefa(String usuario, UUID idTarefa) {
+        log.info("[inicia] TarefaApplicationService - ativaTarefa");
+        Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
+        Tarefa tarefa = tarefaRepository.buscaTarefaPorId(idTarefa)
+                .orElseThrow(() -> APIException.build(HttpStatus.NOT_FOUND, "Tarefa não encontrada!"));
+        tarefa.pertenceAoUsuario(usuarioPorEmail);
+        tarefa.validaNaoEstaAtiva();
+        tarefaRepository.buscaTarefaAtivaPorUsuario(usuarioPorEmail.getIdUsuario())
+                .ifPresent(tarefaAtiva -> {tarefaAtiva.desativa();tarefaRepository.salva(tarefaAtiva);});
+        tarefa.ativa();
+        tarefaRepository.salva(tarefa);
+        log.info("[finaliza] TarefaApplicationService - ativaTarefa");
+    }
+
     @Override
     public Tarefa detalhaTarefa(String usuario, UUID idTarefa) {
         log.info("[inicia] TarefaApplicationService - detalhaTarefa");
@@ -56,6 +75,66 @@ public class TarefaApplicationService implements TarefaService {
     }
 
     @Override
+    public Tarefa atualizaTarefa(String usuario, UUID idTarefa, TarefaAtualizarRequest tarefaAtualizarRequest) {
+        log.info("[inicia] TarefaApplicationService - atualizaTarefa");
+        Tarefa tarefa = detalhaTarefa(usuario, idTarefa);
+        tarefa.atualizaTarefa(tarefaAtualizarRequest.getDescricao());
+        Tarefa tarefaAtualizada = tarefaRepository.salva(tarefa);
+        log.debug("[finaliza] TarefaApplicationService - atualizaTarefa");
+        return tarefaAtualizada;
+    }
+
+    @Override
+    public void incrementaPomodoro(String usuarioEmail, UUID idTarefa) {
+        log.info("[inicia] TarefaApplicationService - incrementaPomodoro");
+        Tarefa tarefa = getTarefa(idTarefa);
+        Usuario usuario = usuarioRepository.buscaUsuarioPorEmail(usuarioEmail);
+        tarefa.pertenceAoUsuario(usuario);
+        usuario.validaSeEstaStatusFoco();
+        tarefa.incrementaPomodoro();
+        usuario.iniciaPausaAposPomodoro(tarefa.getContagemPomodoro());
+        tarefaRepository.salva(tarefa);
+        usuarioRepository.salva(usuario);
+        log.info("[finaliza] TarefaApplicationService - incrementaPomodoro");
+    }
+
+    @Override
+    public void deletaTarefasConcluidas(String usuario) {
+        log.info("[inicia] TarefaApplicationService - deletaTarefasConcluidas");
+        Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
+        log.info("[usuarioPorEmail] {}", usuarioPorEmail);
+
+        List<Tarefa> tarefasConcluidas = tarefaRepository.buscaTarefasConcluidasPorUsuario(usuarioPorEmail.getIdUsuario());
+
+        if (tarefasConcluidas.isEmpty()) {
+            throw APIException.build(HttpStatus.NOT_FOUND, "Usuário não possui nenhuma tarefa concluída!");
+        }
+
+        tarefasConcluidas.forEach(tarefa -> {
+            if (!usuarioPorEmail.getIdUsuario().equals(tarefa.getIdUsuario())) {
+                throw APIException.build(HttpStatus.UNAUTHORIZED, "usuário(a) não autorizado(a) para a requisição solicitada!");
+            }
+        });
+
+        tarefaRepository.deletaTodas(tarefasConcluidas);
+        log.info("[finaliza] TarefaApplicationService - deletaTarefasConcluidas");
+    }
+
+    @Override
+    public List<TarefaResumidoResponse> retornaTodasTarefas(String usuario, UUID idUsuario) {
+        log.info("[inicia] TarefaApplicationService - retornaTodasTarefa");
+        verificaUsuarioExistente(idUsuario);
+        Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
+        usuarioPorEmail.idPertenceAoUsuario(idUsuario);
+        log.info("[usuarioPorEmail] {}", usuarioPorEmail);
+        List<Tarefa> tarefas =
+                    tarefaRepository.buscaTarefasPorIdUsuario(usuarioPorEmail.getIdUsuario());
+        List<TarefaResumidoResponse> tarefasResumidos = TarefaResumidoResponse.converte(tarefas);
+        log.info("[finaliza] TarefaApplicationService - retornaTodasTarefa");
+        return tarefasResumidos;
+    }
+
+    @Override
     public void modificaOrdemTarefa(UUID idTarefa, String usuario, TarefaModificaOrdemRequest novaPosicao) {
         log.info("[inicia] TarefaApplicationService - modificaOrdemTarefa");
         Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
@@ -68,9 +147,19 @@ public class TarefaApplicationService implements TarefaService {
         log.info("[finaliza] TarefaApplicationService - modificaOrdemTarefa");
     }
 
+    private void verificaUsuarioExistente(UUID idUsuario) {
+        usuarioRepository.buscaUsuarioPorId(idUsuario);
+    }
+
     public Tarefa buscaTarefaPorId(UUID idTarefa){
         Tarefa tarefa = tarefaRepository.buscaTarefaPorId(idTarefa).
                         orElseThrow(() -> APIException.build(HttpStatus.NOT_FOUND, "Tarefa não encontrada!"));
+        return tarefa;
+    }
+
+    private Tarefa getTarefa(UUID idTarefa) {
+        Tarefa tarefa = tarefaRepository.buscaTarefaPorId(idTarefa)
+                .orElseThrow(() -> APIException.build(HttpStatus.NOT_FOUND, "Tarefa não encontrada!"));
         return tarefa;
     }
 }

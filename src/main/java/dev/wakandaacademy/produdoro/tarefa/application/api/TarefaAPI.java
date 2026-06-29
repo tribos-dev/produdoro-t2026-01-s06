@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,12 +20,36 @@ public interface TarefaAPI {
     TarefaDetalhadoResponse detalhaTarefa(@RequestHeader(name = "Authorization", required = true) String token,
                                           @PathVariable UUID idTarefa);
 
+    @PatchMapping("/{idTarefa}/ativar")
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    void ativaTarefa(@RequestHeader(name = "Authorization", required = true) String token,
+                     @PathVariable UUID idTarefa);
+
+    @GetMapping("/{idUsuario}")
+    @ResponseStatus(code = HttpStatus.OK)
+    List<TarefaResumidoResponse> retornaTodasTarefas(@RequestHeader(name = "Authorization", required = true) String token, @PathVariable UUID idUsuario);
+
     @PatchMapping("/{idTarefa}/concluir")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     void concluiTarefa(
             @RequestHeader(name = "Authorization", required = true) String token,
             @PathVariable UUID idTarefa
     );
+    @PatchMapping("/{idTarefa}")
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    void atualizaTarefa(@RequestHeader(name = "Authorization",required = true) String token,
+                        @PathVariable UUID idTarefa,
+                        @RequestBody @Valid TarefaAtualizarRequest tarefaAtualizarRequest);
+    @PatchMapping("/{idTarefa}/incrementa-pomodoro")
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    void incrementaPomodoro(
+            @RequestHeader(name = "Authorization", required = true) String token,
+            @PathVariable UUID idTarefa);
+
+
+    @DeleteMapping("/concluidas")
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    void deletaTarefasConcluidas(@RequestHeader(name = "Authorization", required = true) String token);
 
     @PatchMapping("/{idTarefa}/ordem")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
