@@ -44,7 +44,7 @@ public class Tarefa {
 	}
 
 	public void pertenceAoUsuario(Usuario usuarioPorEmail) {
-		if(!this.idUsuario.equals(usuarioPorEmail.getIdUsuario())) {
+		if (!this.idUsuario.equals(usuarioPorEmail.getIdUsuario())) {
 			throw APIException.build(HttpStatus.UNAUTHORIZED, "Usuário não é dono da Tarefa solicitada!");
 		}
 	}
@@ -74,13 +74,13 @@ public class Tarefa {
 		this.contagemPomodoro++;
 	}
 
-    public void atualizaTarefa(String novaDescricao) {
-        validaDescricaoVazia(novaDescricao);
-        this.descricao = novaDescricao;
-    }
+	public void atualizaTarefa(String novaDescricao) {
+		validaDescricaoVazia(novaDescricao);
+		this.descricao = novaDescricao;
+	}
 
-    private static void validaDescricaoVazia(String novaDescricao) {
-        if(novaDescricao.isBlank())
-            throw APIException.build(HttpStatus.BAD_REQUEST, "O campo não pode estar vazio");
-    }
+	private static void validaDescricaoVazia(String novaDescricao) {
+		if (novaDescricao.isBlank())
+			throw APIException.build(HttpStatus.BAD_REQUEST, "O campo não pode estar vazio");
+	}
 }
