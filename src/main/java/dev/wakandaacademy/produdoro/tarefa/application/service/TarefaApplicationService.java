@@ -1,6 +1,7 @@
 package dev.wakandaacademy.produdoro.tarefa.application.service;
 
 import dev.wakandaacademy.produdoro.handler.APIException;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaAtualizarRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaIdResponse;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaResumidoResponse;
@@ -70,6 +71,16 @@ public class TarefaApplicationService implements TarefaService {
         tarefa.concluir();
         tarefaRepository.salva(tarefa);
         log.info("[finaliza] TarefaApplicationService - concluiTarefa");
+    }
+
+    @Override
+    public Tarefa atualizaTarefa(String usuario, UUID idTarefa, TarefaAtualizarRequest tarefaAtualizarRequest) {
+        log.info("[inicia] TarefaApplicationService - atualizaTarefa");
+        Tarefa tarefa = detalhaTarefa(usuario, idTarefa);
+        tarefa.atualizaTarefa(tarefaAtualizarRequest.getDescricao());
+        Tarefa tarefaAtualizada = tarefaRepository.salva(tarefa);
+        log.debug("[finaliza] TarefaApplicationService - atualizaTarefa");
+        return tarefaAtualizada;
     }
 
     @Override

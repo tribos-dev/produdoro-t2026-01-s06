@@ -2,6 +2,7 @@ package dev.wakandaacademy.produdoro.tarefa.application.service;
 
 import dev.wakandaacademy.produdoro.DataHelper;
 import dev.wakandaacademy.produdoro.handler.APIException;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaAtualizarRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaIdResponse;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaResumidoResponse;
@@ -164,6 +165,70 @@ class TarefaApplicationServiceTest {
 
         assertEquals("O usuário não têm acesso às tarefas.", exception.getMessage());
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatusException());
+    }
+    @Test
+    @DisplayName("Tarefa é editada com sucesso")
+    void deveEditarTarefaComSucesso() {
+        Usuario usuario = DataHelper.createUsuario();
+        Tarefa tarefa = DataHelper.createTarefa();
+        TarefaAtualizarRequest tarefaAtualizarRequest = DataHelper.createAtualizarTarefaRequest();
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getIdUsuario().toString())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefaPorId(tarefa.getIdTarefa())).thenReturn(Optional.of(tarefa));
+        when(tarefaRepository.salva(tarefa)).thenReturn(tarefa);
+
+        Tarefa tarefaAtualizada = tarefaApplicationService.atualizaTarefa(
+                usuario.getIdUsuario().toString(),
+                tarefa.getIdTarefa(),
+                tarefaAtualizarRequest
+        );
+
+        assertNotNull(tarefaAtualizada);
+        assertEquals(tarefaAtualizada.getDescricao(), tarefaAtualizarRequest.getDescricao());
+    }
+
+    @Test
+    @DisplayName("Não edita tarefa não encontrada, código 404")
+    void naoDeveEditarTarefaNaoEncontrada() {
+        Usuario usuario = DataHelper.createUsuario();
+        Tarefa tarefa = DataHelper.createTarefa();
+        TarefaAtualizarRequest tarefaAtualizarRequest = DataHelper.createAtualizarTarefaRequest();
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getIdUsuario().toString())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefaPorId(tarefa.getIdTarefa())).thenReturn(Optional.empty());
+
+        APIException exception
+                = assertThrows(APIException.class, () -> tarefaApplicationService
+                .atualizaTarefa(
+                    usuario.getIdUsuario().toString(),
+                    tarefa.getIdTarefa(),
+                    tarefaAtualizarRequest
+                ));
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusException());
+        assertEquals("Tarefa não encontrada!",  exception.getBodyException().getMessage());
+    }
+
+    @Test
+    @DisplayName("Não edita tarefa que não pertence ao usuário, código 401")
+    void naoEditarTarefaNaoPertenceAoUsuario() {
+        Usuario usuarioComIdDistinto = Usuario.builder().idUsuario(UUID.randomUUID()).build();
+        Tarefa tarefa = DataHelper.createTarefa();
+        TarefaAtualizarRequest tarefaAtualizarRequest = DataHelper.createAtualizarTarefaRequest();
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuarioComIdDistinto.getIdUsuario().toString())).thenReturn(usuarioComIdDistinto);
+        when(tarefaRepository.buscaTarefaPorId(tarefa.getIdTarefa())).thenReturn(Optional.of(tarefa));
+
+        APIException exception
+                = assertThrows(APIException.class, () -> tarefaApplicationService
+                .atualizaTarefa(
+                    usuarioComIdDistinto.getIdUsuario().toString(),
+                    tarefa.getIdTarefa(),
+                    tarefaAtualizarRequest
+                ));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusException());
+        assertEquals("Usuário não é dono da Tarefa solicitada!",  exception.getBodyException().getMessage());
     }
     @Test
     void deveIncrementarPomodoroComSucesso() {

@@ -34,6 +34,11 @@ public interface TarefaAPI {
             @RequestHeader(name = "Authorization", required = true) String token,
             @PathVariable UUID idTarefa
     );
+    @PatchMapping("/{idTarefa}")
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    void atualizaTarefa(@RequestHeader(name = "Authorization",required = true) String token,
+                        @PathVariable UUID idTarefa,
+                        @RequestBody @Valid TarefaAtualizarRequest tarefaAtualizarRequest);
     @PatchMapping("/{idTarefa}/incrementa-pomodoro")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     void incrementaPomodoro(

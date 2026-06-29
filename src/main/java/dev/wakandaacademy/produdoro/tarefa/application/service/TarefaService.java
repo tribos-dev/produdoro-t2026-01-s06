@@ -1,5 +1,6 @@
 package dev.wakandaacademy.produdoro.tarefa.application.service;
 
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaAtualizarRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaIdResponse;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaResumidoResponse;
@@ -12,6 +13,7 @@ public interface TarefaService {
     Tarefa detalhaTarefa(String usuario, UUID idTarefa);
     List<TarefaResumidoResponse> retornaTodasTarefas(String usuario, UUID idUsuario);
     void concluiTarefa(String usuario, UUID idTarefa);
+    Tarefa atualizaTarefa(String usuario, UUID idTarefa, TarefaAtualizarRequest tarefaAtualizarRequest);
     void ativaTarefa(String usuario, UUID idTarefa);
     void incrementaPomodoro(String usuarioEmail, UUID idTarefa);
     void deletaTarefasConcluidas(String usuario);
