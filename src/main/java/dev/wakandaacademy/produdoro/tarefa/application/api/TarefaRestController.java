@@ -9,6 +9,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -43,6 +44,15 @@ public class TarefaRestController implements TarefaAPI {
     }
 
     @Override
+    public List<TarefaResumidoResponse> retornaTodasTarefas(String token, UUID idUsuario) {
+        log.info("[inicia] TarefaRestController - retornaTodasTarefas");
+        String usuario = getUsuarioByToken(token);
+        var tarefas = tarefaService.retornaTodasTarefas(usuario, idUsuario);
+        log.info("[finaliza] TarefaRestController - retornaTodasTarefas");
+        return tarefas;
+    }
+
+    @Override
     public void ativaTarefa(String token, UUID idTarefa) {
         log.info("[inicia] TarefaRestController - ativaTarefa");
         String usuario = getUsuarioByToken(token);
@@ -58,21 +68,29 @@ public class TarefaRestController implements TarefaAPI {
         log.info("[finaliza] TarefaRestController - incrementaPomodoro");
     }
 
+    @Override
+    public void limparTodasTarefas(String token, UUID idUsuario) {
+        log.info("[inicia] TarefaRestController - limparTodasTarefas");
+        String usuario = getUsuarioByToken(token);
+        tarefaService.limparTodasTarefas(usuario, idUsuario);
+        log.info("[finaliza] TarefaRestController - limparTodasTarefas");
+
+    }
+
+    @Override
+    public void atualizaTarefa(String token, UUID idTarefa, TarefaAtualizarRequest tarefaAtualizarRequest) {
+        log.info("[inicia] TarefaRestController - atualizaTarefa");
+        String usuario = getUsuarioByToken(token);
+        tarefaService.atualizaTarefa(usuario, idTarefa, tarefaAtualizarRequest);
+        log.info("[finaliza] TarefaRestController - atualizaTarefa");
+    }
+
     private String getUsuarioByToken(String token) {
         log.debug("[token] {}", token);
         String usuario = tokenService.getUsuarioByBearerToken(token)
                 .orElseThrow(() -> APIException.build(HttpStatus.UNAUTHORIZED, token));
         log.info("[usuario] {}", usuario);
         return usuario;
-    }
-
-    @Override
-    public void limparTodasTarefas(String token, UUID idUsuario) {
-        log.info("[iniciar] TarefaRestController - limparTodasTarefas");
-        String usuario = getUsuarioByToken(token);
-        tarefaService.limparTodasTarefas(usuario, idUsuario);
-        log.info("[finaliza] TarefaRestController - limparTodasTarefas");
-
     }
 
     @Override

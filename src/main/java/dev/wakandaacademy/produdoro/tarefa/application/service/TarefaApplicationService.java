@@ -1,8 +1,10 @@
 package dev.wakandaacademy.produdoro.tarefa.application.service;
 
 import dev.wakandaacademy.produdoro.handler.APIException;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaAtualizarRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaIdResponse;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaResumidoResponse;
 import dev.wakandaacademy.produdoro.tarefa.application.repository.TarefaRepository;
 import dev.wakandaacademy.produdoro.tarefa.domain.Tarefa;
 import dev.wakandaacademy.produdoro.usuario.application.repository.UsuarioRepository;
@@ -97,6 +99,17 @@ public class TarefaApplicationService implements TarefaService {
         }
     }
 
+    public Tarefa atualizaTarefa(String usuario, UUID idTarefa, TarefaAtualizarRequest tarefaAtualizarRequest) {
+        log.info("[inicia] TarefaApplicationService - atualizaTarefa");
+        Tarefa tarefa = detalhaTarefa(usuario, idTarefa);
+        tarefa.atualizaTarefa(tarefaAtualizarRequest.getDescricao());
+        Tarefa tarefaAtualizada = tarefaRepository.salva(tarefa);
+        log.debug("[finaliza] TarefaApplicationService - atualizaTarefa");
+        return tarefaAtualizada;
+    }
+
+    @Override
+
     public void incrementaPomodoro(String usuarioEmail, UUID idTarefa) {
         log.info("[inicia] TarefaApplicationService - incrementaPomodoro");
         Tarefa tarefa = getTarefa(idTarefa);
@@ -138,5 +151,22 @@ public class TarefaApplicationService implements TarefaService {
 
         tarefaRepository.deletaTodas(tarefasConcluidas);
         log.info("[finaliza] TarefaApplicationService - deletaTarefasConcluidas");
+    }
+
+    @Override
+    public List<TarefaResumidoResponse> retornaTodasTarefas(String usuario, UUID idUsuario) {
+        log.info("[inicia] TarefaApplicationService - retornaTodasTarefa");
+        verificaUsuarioExistente(idUsuario);
+        Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
+        usuarioPorEmail.idPertenceAoUsuario(idUsuario);
+        log.info("[usuarioPorEmail] {}", usuarioPorEmail);
+        List<Tarefa> tarefas = tarefaRepository.buscaTarefasPorIdUsuario(usuarioPorEmail.getIdUsuario());
+        List<TarefaResumidoResponse> tarefasResumidos = TarefaResumidoResponse.converte(tarefas);
+        log.info("[finaliza] TarefaApplicationService - retornaTodasTarefa");
+        return tarefasResumidos;
+    }
+
+    private void verificaUsuarioExistente(UUID idUsuario) {
+        usuarioRepository.buscaUsuarioPorId(idUsuario);
     }
 }
