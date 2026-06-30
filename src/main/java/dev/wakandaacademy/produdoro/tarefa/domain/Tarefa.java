@@ -31,8 +31,9 @@ public class Tarefa {
 	private StatusTarefa status;
 	private StatusAtivacaoTarefa statusAtivacao;
 	private int contagemPomodoro;
+	private int posicao;
 
-	public Tarefa(TarefaRequest tarefaRequest) {
+	public Tarefa(TarefaRequest tarefaRequest, int novaPosicao) {
 		this.idTarefa = UUID.randomUUID();
 		this.idUsuario = tarefaRequest.getIdUsuario();
 		this.descricao = tarefaRequest.getDescricao();
@@ -41,6 +42,7 @@ public class Tarefa {
 		this.status = StatusTarefa.A_FAZER;
 		this.statusAtivacao = StatusAtivacaoTarefa.INATIVA;
 		this.contagemPomodoro = 1;
+		this.posicao = novaPosicao;
 	}
 
 	public void pertenceAoUsuario(Usuario usuarioPorEmail) {
@@ -82,5 +84,9 @@ public class Tarefa {
 	private static void validaDescricaoVazia(String novaDescricao) {
 		if (novaDescricao.isBlank())
 			throw APIException.build(HttpStatus.BAD_REQUEST, "O campo não pode estar vazio");
+	}
+
+	public void modificaPosicao(int novaPosicao){
+		this.posicao = novaPosicao;
 	}
 }

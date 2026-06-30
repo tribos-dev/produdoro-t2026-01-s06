@@ -3,6 +3,7 @@ package dev.wakandaacademy.produdoro.tarefa.application.service;
 import dev.wakandaacademy.produdoro.handler.APIException;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaAtualizarRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaIdResponse;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaModificaOrdemRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaResumidoResponse;
 import dev.wakandaacademy.produdoro.tarefa.application.repository.TarefaRepository;
@@ -27,7 +28,8 @@ public class TarefaApplicationService implements TarefaService {
     @Override
     public TarefaIdResponse criaNovaTarefa(TarefaRequest tarefaRequest) {
         log.info("[inicia] TarefaApplicationService - criaNovaTarefa");
-        Tarefa tarefaCriada = tarefaRepository.salva(new Tarefa(tarefaRequest));
+        int novaPosicao = tarefaRepository.contaTarefasUsuario(tarefaRequest.getIdUsuario());
+        Tarefa tarefaCriada = tarefaRepository.salva(new Tarefa(tarefaRequest, novaPosicao));
         log.info("[finaliza] TarefaApplicationService - criaNovaTarefa");
         return TarefaIdResponse.builder().idTarefa(tarefaCriada.getIdTarefa()).build();
     }
@@ -123,12 +125,6 @@ public class TarefaApplicationService implements TarefaService {
         log.info("[finaliza] TarefaApplicationService - incrementaPomodoro");
     }
 
-    private Tarefa getTarefa(UUID idTarefa) {
-        Tarefa tarefa = tarefaRepository.buscaTarefaPorId(idTarefa)
-                .orElseThrow(() -> APIException.build(HttpStatus.NOT_FOUND, "Tarefa não encontrada!"));
-        return tarefa;
-    }
-
     @Override
     public void deletaTarefasConcluidas(String usuario) {
         log.info("[inicia] TarefaApplicationService - deletaTarefasConcluidas");
@@ -166,7 +162,77 @@ public class TarefaApplicationService implements TarefaService {
         return tarefasResumidos;
     }
 
+    @Override
+    public void modificaOrdemTarefa(UUID idTarefa, String usuario, TarefaModificaOrdemRequest tarefaModificaOrdemRequest) {
+        log.info("[inicia] TarefaApplicationService - modificaOrdemTarefa");
+        Usuario usuarioPorEmail = usuarioRepository.buscaUsuarioPorEmail(usuario);
+        log.info("[usuarioPorEmail] {}", usuarioPorEmail);
+        Tarefa tarefa = buscaTarefaValida(idTarefa);
+        validaTarefaPertenceAoUsuario(tarefa, usuarioPorEmail);
+        int novaPosicao = tarefaModificaOrdemRequest.getNovaPosicao();
+        modificaOrdemOutrasTarefas(usuarioPorEmail.getIdUsuario(), tarefa, novaPosicao);
+        tarefa.modificaPosicao(novaPosicao);
+        tarefaRepository.salva(tarefa);
+        log.info("[finaliza] TarefaApplicationService - modificaOrdemTarefa");
+    }
+
+    private void modificaOrdemOutrasTarefas(UUID idUsuario, Tarefa tarefaMovida, int novaPosicao) {
+        log.info("[inicia] TarefaApplicationService - modificaOrdemOutrasTarefas");
+        int posicaoAntiga = tarefaMovida.getPosicao();
+        List<Tarefa> tarefasDoUsuario = tarefaRepository.buscaTarefasPorIdUsuario(idUsuario);
+        validaNovaPosicao(novaPosicao, tarefasDoUsuario.size());
+        tarefasDoUsuario.stream()
+                .filter(outraTarefa -> !outraTarefa.getIdTarefa().equals(tarefaMovida.getIdTarefa()))
+                .forEach(outraTarefa -> {
+                    if (reposicionaOutraTarefa(outraTarefa, posicaoAntiga, novaPosicao)) {
+                        tarefaRepository.salva(outraTarefa);
+                    }
+                });
+        log.info("[finaliza] TarefaApplicationService - modificaOrdemOutrasTarefas");
+    }
+
+    private boolean reposicionaOutraTarefa(Tarefa outraTarefa, int posicaoAntiga, int novaPosicao) {
+        int posicaoAtual = outraTarefa.getPosicao();
+        if (novaPosicao > posicaoAntiga) {
+            if (posicaoAtual > posicaoAntiga && posicaoAtual <= novaPosicao) {
+                outraTarefa.modificaPosicao(posicaoAtual - 1);
+                return true;
+            }
+        } else if (novaPosicao < posicaoAntiga) {
+            if (posicaoAtual >= novaPosicao && posicaoAtual < posicaoAntiga) {
+                outraTarefa.modificaPosicao(posicaoAtual + 1);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void validaNovaPosicao(int novaPosicao, int totalTarefas) {
+        if (novaPosicao >= totalTarefas) {
+            throw APIException.build(HttpStatus.BAD_REQUEST,
+                    "Nova posição inválida! A posição deve estar entre 0 e " + (totalTarefas - 1) + ".");
+        }
+    }
+
+    private Tarefa buscaTarefaValida(UUID idTarefa) {
+        return tarefaRepository.buscaTarefaPorId(idTarefa)
+                .orElseThrow(() -> APIException.build(HttpStatus.NOT_FOUND, "id da tarefa inválido"));
+    }
+
+    private void validaTarefaPertenceAoUsuario(Tarefa tarefa, Usuario usuario) {
+        if (!tarefa.getIdUsuario().equals(usuario.getIdUsuario())) {
+            throw APIException.build(HttpStatus.UNAUTHORIZED,
+                    "Usuário(a) não autorizado(a) para a requisição solicitada");
+        }
+    }
+
     private void verificaUsuarioExistente(UUID idUsuario) {
         usuarioRepository.buscaUsuarioPorId(idUsuario);
+    }
+
+    private Tarefa getTarefa(UUID idTarefa) {
+        Tarefa tarefa = tarefaRepository.buscaTarefaPorId(idTarefa)
+                .orElseThrow(() -> APIException.build(HttpStatus.NOT_FOUND, "Tarefa não encontrada!"));
+        return tarefa;
     }
 }

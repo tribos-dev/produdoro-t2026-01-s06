@@ -2,6 +2,7 @@ package dev.wakandaacademy.produdoro.tarefa.application.service;
 
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaAtualizarRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaIdResponse;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaModificaOrdemRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaResumidoResponse;
 import dev.wakandaacademy.produdoro.tarefa.domain.Tarefa;
@@ -27,4 +28,5 @@ public interface TarefaService {
     void incrementaPomodoro(String usuarioEmail, UUID idTarefa);
 
     void deletaTarefasConcluidas(String usuario);
+    void modificaOrdemTarefa(UUID idTarefa, String usuario, TarefaModificaOrdemRequest novaPosicao);
 }

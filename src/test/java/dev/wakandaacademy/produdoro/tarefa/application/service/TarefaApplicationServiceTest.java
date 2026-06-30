@@ -11,6 +11,7 @@ import dev.wakandaacademy.produdoro.DataHelper;
 import dev.wakandaacademy.produdoro.handler.APIException;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaAtualizarRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaIdResponse;
+import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaModificaOrdemRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaRequest;
 import dev.wakandaacademy.produdoro.tarefa.application.api.TarefaResumidoResponse;
 import dev.wakandaacademy.produdoro.tarefa.application.repository.TarefaRepository;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,13 +50,29 @@ class TarefaApplicationServiceTest {
     @Test
     void deveRetornarIdTarefaNovaCriada() {
         TarefaRequest request = getTarefaRequest();
-        when(tarefaRepository.salva(any())).thenReturn(new Tarefa(request));
+        when(tarefaRepository.contaTarefasUsuario(any())).thenReturn(0);
+        when(tarefaRepository.salva(any())).thenReturn(new Tarefa(request, 0));
 
         TarefaIdResponse response = tarefaApplicationService.criaNovaTarefa(request);
 
         assertNotNull(response);
         assertEquals(TarefaIdResponse.class, response.getClass());
         assertEquals(UUID.class, response.getIdTarefa().getClass());
+    }
+
+    @Test
+    void deveCriarTarefaNaUltimaPosicao() {
+        TarefaRequest request = getTarefaRequest();
+        int quantTarefasExistentes = 5;
+
+        when(tarefaRepository.contaTarefasUsuario(request.getIdUsuario())).thenReturn(quantTarefasExistentes);
+        when(tarefaRepository.salva(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        tarefaApplicationService.criaNovaTarefa(request);
+
+        ArgumentCaptor<Tarefa> captor = ArgumentCaptor.forClass(Tarefa.class);
+        verify(tarefaRepository).contaTarefasUsuario(request.getIdUsuario());
+        verify(tarefaRepository).salva(captor.capture());
+        assertEquals(quantTarefasExistentes, captor.getValue().getPosicao());
     }
 
     @Test
@@ -425,6 +443,71 @@ class TarefaApplicationServiceTest {
         verify(tarefaRepository, never()).removerTodasTarefas(any());
     }
 
+
+    @Test
+    @DisplayName("Tarefa reordenada com sucesso")
+    void deveModificarOrdemDaTarefaComSucesso() {
+        Usuario usuario = DataHelper.createUsuario();
+        Tarefa tarefaA = criaTarefaComPosicao(usuario.getIdUsuario(), 0);
+        Tarefa tarefaB = criaTarefaComPosicao(usuario.getIdUsuario(), 1);
+        Tarefa tarefaC = criaTarefaComPosicao(usuario.getIdUsuario(), 2);
+        Tarefa tarefaD = criaTarefaComPosicao(usuario.getIdUsuario(), 3);
+        List<Tarefa> tarefas = List.of(tarefaA, tarefaB, tarefaC, tarefaD);
+        TarefaModificaOrdemRequest novaPosicao = new TarefaModificaOrdemRequest(1);
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefaPorId(tarefaD.getIdTarefa())).thenReturn(Optional.of(tarefaD));
+        when(tarefaRepository.buscaTarefasPorIdUsuario(usuario.getIdUsuario())).thenReturn(tarefas);
+
+        tarefaApplicationService.modificaOrdemTarefa(tarefaD.getIdTarefa(), usuario.getEmail(), novaPosicao);
+
+        assertEquals(1, tarefaD.getPosicao());
+        assertEquals(0, tarefaA.getPosicao());
+        assertEquals(2, tarefaB.getPosicao());
+        assertEquals(3, tarefaC.getPosicao());
+        verify(tarefaRepository).salva(tarefaB);
+        verify(tarefaRepository).salva(tarefaC);
+        verify(tarefaRepository).salva(tarefaD);
+        verify(tarefaRepository, never()).salva(tarefaA);
+    }
+
+    @Test
+    @DisplayName("Não modifica a ordem quando o id da tarefa é inválido, código 404")
+    void naoDeveModificarOrdemQuandoIdTarefaInvalido() {
+        Usuario usuario = DataHelper.createUsuario();
+        UUID idTarefaInvalido = UUID.randomUUID();
+        TarefaModificaOrdemRequest novaPosicao = new TarefaModificaOrdemRequest(0);
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuario.getEmail())).thenReturn(usuario);
+        when(tarefaRepository.buscaTarefaPorId(idTarefaInvalido)).thenReturn(Optional.empty());
+
+        APIException exception = assertThrows(APIException.class, () -> tarefaApplicationService
+                .modificaOrdemTarefa(idTarefaInvalido, usuario.getEmail(), novaPosicao));
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusException());
+        assertEquals("id da tarefa inválido", exception.getBodyException().getMessage());
+        verify(tarefaRepository, never()).salva(any());
+    }
+
+    @Test
+    @DisplayName("Não modifica a ordem quando a tarefa não pertence ao usuário, código 401")
+    void naoDeveModificarOrdemQuandoTarefaNaoPertenceAoUsuario() {
+        Usuario usuarioSecundario = DataHelper.criaUsuarioSecundario();
+        Tarefa tarefa = DataHelper.createTarefa();
+        TarefaModificaOrdemRequest novaPosicao = new TarefaModificaOrdemRequest(0);
+
+        when(usuarioRepository.buscaUsuarioPorEmail(usuarioSecundario.getEmail())).thenReturn(usuarioSecundario);
+        when(tarefaRepository.buscaTarefaPorId(tarefa.getIdTarefa())).thenReturn(Optional.of(tarefa));
+
+        APIException exception = assertThrows(APIException.class, () -> tarefaApplicationService
+                .modificaOrdemTarefa(tarefa.getIdTarefa(), usuarioSecundario.getEmail(), novaPosicao));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusException());
+        assertEquals("Usuário(a) não autorizado(a) para a requisição solicitada",
+                exception.getBodyException().getMessage());
+        verify(tarefaRepository, never()).salva(any());
+    }
+
     public TarefaRequest getTarefaRequest() {
         TarefaRequest request = new TarefaRequest("tarefa 1", UUID.randomUUID(), null, null, 0);
         return request;
@@ -438,6 +521,17 @@ class TarefaApplicationServiceTest {
                 .status(status)
                 .statusAtivacao(StatusAtivacaoTarefa.INATIVA)
                 .contagemPomodoro(1)
+                .build();
+    }
+
+    private Tarefa criaTarefaComPosicao(UUID idUsuario, int posicao) {
+        return Tarefa.builder()
+                .idTarefa(UUID.randomUUID())
+                .idUsuario(idUsuario)
+                .descricao("descricao tarefa")
+                .statusAtivacao(StatusAtivacaoTarefa.INATIVA)
+                .contagemPomodoro(1)
+                .posicao(posicao)
                 .build();
     }
 }
